@@ -1,0 +1,2502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Morse Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            /* Palette */
+            --bg-app: #09090b;       /* Zinc 950 */
+            --bg-panel: #18181b;     /* Zinc 900 */
+            --bg-element: #27272a;   /* Zinc 800 */
+            --bg-active: #3f3f46;    /* Zinc 700 */
+            
+            --primary: #3b82f6;      /* Blue 500 */
+            --primary-dark: #2563eb; /* Blue 600 */
+            
+            --accent: #f59e0b;       /* Amber 500 */
+            --danger: #ef4444;       /* Red 500 */
+            
+            --text-main: #f4f4f5;    /* Zinc 100 */
+            --text-muted: #a1a1aa;   /* Zinc 400 */
+            
+            --border: #27272a;
+            --border-hover: #3f3f46;
+            
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            
+            --trans-fast: 0.15s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            background-image: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.15), transparent 70%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            height: 100vh;
+            height: 100dvh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* --- Layout --- */
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 16px;
+            padding-top: max(16px, env(safe-area-inset-top));
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            gap: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- Header --- */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 44px;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.02em;
+        }
+        
+        .brand-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%; /* Circle */
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            transition: opacity 0.1s, background 0.1s;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* --- Buttons (Clean Flat) --- */
+        .btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            height: 36px;
+            padding: 0 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--trans-fast);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            gap: 8px;
+        }
+
+        .btn:hover { 
+            background: var(--bg-element); 
+            color: var(--text-main); 
+            border-color: var(--border-hover);
+        }
+        .btn:active { transform: translateY(1px); }
+
+        .btn.active {
+            background: var(--bg-active);
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+        
+        /* Primary Action Button */
+        .pop-btn {
+            background: var(--text-main);
+            color: var(--bg-app);
+            border: none;
+            height: 36px;
+            padding: 0 16px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--trans-fast);
+        }
+        .pop-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .pop-btn:active { transform: translateY(0); }
+        
+        .pop-btn.active-state {
+            background: var(--bg-element);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        /* --- Monitor Area --- */
+        .monitor-stage {
+            flex: 1;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .output-layer {
+            position: absolute;
+            inset: 0;
+            padding: 24px;
+            padding-bottom: 70px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(1.5rem, 4vw, 3rem);
+            color: var(--text-main);
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        
+        .monitor-toolbar {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+            z-index: 20;
+        }
+
+        .monitor-action-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            background: var(--bg-element);
+            border: none;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--trans-fast);
+        }
+        .monitor-action-btn:hover { 
+            background: var(--bg-active); 
+            color: var(--text-main); 
+        }
+
+        /* --- Control Deck --- */
+        .control-deck {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 4px 0;
+            flex-shrink: 0;
+            width: 100%;
+            scrollbar-width: none;
+        }
+        .control-deck::-webkit-scrollbar { display: none; }
+
+        .control-group {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            white-space: nowrap;
+        }
+        
+        .group-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        /* --- Sliders --- */
+        .range-wrapper { display: flex; flex-direction: column; justify-content: center; min-width: 90px;}
+        .range-label { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 6px; font-family: 'Inter'; font-weight: 500; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        
+        input[type=range]::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            height: 12px; 
+            width: 12px; 
+            border-radius: 50%; 
+            background: var(--primary); 
+            cursor: pointer; 
+            margin-top: -4px; 
+            border: 2px solid var(--bg-panel);
+            box-shadow: 0 0 0 1px var(--bg-active);
+        }
+        
+        input[type=range]::-webkit-slider-runnable-track { 
+            width: 100%; 
+            height: 4px; 
+            cursor: pointer; 
+            background: var(--bg-active); 
+            border-radius: 2px; 
+        }
+
+        /* --- Paddles --- */
+        .paddle-container { 
+            height: 180px; 
+            display: flex; 
+            gap: 16px; 
+            flex-shrink: 0; 
+        }
+        .paddle-container.straight-mode .paddle.right { display: none; }
+        
+        .paddle { 
+            flex: 1; 
+            background: var(--bg-panel); 
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg); 
+            position: relative; 
+            cursor: pointer; 
+            transition: background 0.1s, transform 0.1s; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            color: var(--text-muted); 
+            overflow: hidden; 
+            user-select: none; 
+            -webkit-touch-callout: none;
+            touch-action: none; 
+        }
+        
+        .paddle:active, .paddle.pressed { 
+            background: var(--bg-element); 
+            border-color: var(--primary); 
+            color: var(--text-main);
+            transform: translateY(2px);
+        }
+
+        .paddle span { font-size: 3rem; font-weight: 400; font-family: 'JetBrains Mono'; opacity: 0.5; }
+        .paddle small { margin-top: 8px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; opacity: 0.7; }
+        .paddle:active span, .paddle.pressed span { color: var(--primary); opacity: 1; }
+        .paddle:active small, .paddle.pressed small { color: var(--primary); opacity: 1; }
+
+        /* --- Overlays --- */
+        #start-overlay, #game-results-overlay, #setup-overlay, #analytics-overlay { 
+            position: fixed; inset: 0; 
+            background: rgba(9, 9, 11, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 300; 
+            display: flex; align-items: center; justify-content: center; 
+            padding: 20px; 
+        }
+        
+        #analytics-overlay {
+            align-items: flex-start;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .glass-card, .setup-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+            border-radius: 16px; 
+            padding: 32px;
+            max-width: 480px; 
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+
+        /* New Stats Dashboard Styles */
+        .stats-dashboard {
+            width: 100%;
+            max-width: 800px;
+            margin: 40px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding: 24px;
+            padding-bottom: 80px;
+        }
+
+        .stats-header {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 12px;
+        }
+
+        .metric-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            width: 100%;
+        }
+
+        .metric-card {
+            background: var(--bg-element);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .metric-val { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 4px 0; }
+        .metric-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+        
+        .chart-container {
+            background: var(--bg-element);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Heatmap Styles */
+        .heatmap-container {
+            background: var(--bg-element);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .hm-row { display: flex; gap: 6px; justify-content: center; width: 100%; }
+        .hm-key {
+            width: 36px; height: 40px;
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.9rem;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .hm-key.has-error { color: white; border-color: transparent; }
+        
+        /* Tooltip for heatmap */
+        .hm-key:hover::after {
+            content: attr(data-errors) " errors";
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-active);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+            border: 1px solid var(--border);
+        }
+
+        .hero-title { 
+            font-size: 2rem; 
+            font-weight: 800; 
+            margin-bottom: 4px; 
+            color: var(--text-main);
+            letter-spacing: -0.03em;
+        }
+        .hero-subtitle { 
+            color: var(--primary); 
+            font-size: 0.85rem; 
+            letter-spacing: 0.05em; 
+            text-transform: uppercase; 
+            margin-bottom: 24px; 
+            font-weight: 700; 
+        }
+        
+        .cta-btn { 
+            background: var(--text-main); 
+            color: var(--bg-app); 
+            font-weight: 700; 
+            padding: 14px 40px; 
+            border-radius: var(--radius-sm); 
+            border: none; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            width: 100%; 
+            margin-top: 16px;
+            transition: transform 0.1s;
+        }
+        .cta-btn:hover { background: #fff; transform: translateY(-1px); }
+        .cta-btn:active { transform: translateY(1px); }
+
+        /* Toggles */
+        .toggle-group { 
+            background: var(--bg-element); 
+            border-radius: var(--radius-sm); 
+            padding: 4px; 
+            display: flex; 
+            gap: 4px;
+        }
+        .toggle-opt { 
+            padding: 8px 16px; 
+            border-radius: 4px; 
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            flex: 1; 
+            transition: all 0.2s; 
+            font-weight: 600;
+        }
+        .toggle-opt.selected { 
+            background: var(--bg-active); 
+            color: var(--text-main); 
+        }
+
+        /* --- Internal UI Layers --- */
+        .layer-ui { 
+            display: none; position: absolute; inset: 0; background: transparent; z-index: 50; 
+            flex-direction: column; padding: 24px; align-items: center; justify-content: center;
+        }
+        .char-node { color: var(--bg-active); font-weight: 600; transition: color 0.1s; position: relative; }
+        .char-node.active { color: var(--text-main); border-bottom: 3px solid var(--primary); }
+        .char-node.correct { color: #10b981; }
+        .char-node.wrong { color: var(--danger); }
+        
+        /* Visual Hint Tooltip */
+        .visual-hint-popup {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.3em;
+            color: var(--accent);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 2px;
+            font-weight: 700;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0.9;
+        }
+
+        /* --- Mobile Specifics --- */
+        .mobile-menu-btn { display: none; background: transparent; border: 1px solid var(--border); color: var(--text-main); width: 40px; height: 40px; border-radius: var(--radius-sm); align-items: center; justify-content: center; }
+        
+        /* Hidden by default on desktop */
+        .drawer-header { display: none; }
+
+        @media (max-width: 1024px) {
+            .mobile-menu-btn { display: flex; }
+            .control-deck {
+                position: fixed; inset: 0; z-index: 200;
+                background: var(--bg-app);
+                flex-direction: column; padding: 16px; gap: 12px;
+                transform: translateY(100%); transition: transform 0.2s ease-in-out;
+                justify-content: flex-start;
+                padding-top: max(20px, env(safe-area-inset-top));
+                padding-bottom: max(20px, env(safe-area-inset-bottom));
+            }
+            .control-deck.open { transform: translateY(0); }
+            
+            .control-group { 
+                width: 100%; 
+                display: grid; 
+                grid-template-columns: 1fr 1fr; 
+                gap: 12px; 
+                background: var(--bg-panel);
+            }
+            .group-label { grid-column: 1 / -1; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 4px; }
+            .range-wrapper { grid-column: 1 / -1; }
+            
+            .drawer-header { 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                width: 100%; 
+                padding-bottom: 16px; 
+                border-bottom: 1px solid var(--border);
+                margin-bottom: 8px;
+            }
+            .drawer-title { font-weight: 700; font-size: 1.25rem; }
+            .drawer-close { 
+                background: var(--bg-element); 
+                border: none; 
+                color: var(--text-main); 
+                width: 36px; height: 36px; 
+                border-radius: 50%; 
+                display: flex; align-items: center; justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-shell { 
+                padding: 12px; 
+                gap: 12px; 
+                padding-top: max(16px, env(safe-area-inset-top)); 
+            }
+            
+            /* Optimized Mobile Layout */
+            .monitor-stage { 
+                flex: 1; 
+                min-height: 0; 
+                height: auto; 
+            }
+            
+            .paddle-container { 
+                height: 160px; 
+                flex-shrink: 0; 
+            }
+            
+            .pop-btn span, .btn span { display: none; }
+            .pop-btn, .btn { padding: 0 12px; }
+            .brand-text { display: none; } 
+            
+            /* Stats Mobile Optimizations */
+            .stats-dashboard { margin: 0; padding: 16px; padding-top: 60px; max-width: 100%; }
+            .metric-row { grid-template-columns: 1fr; gap: 12px; }
+            .metric-card { flex-direction: row; justify-content: space-between; padding: 20px; }
+            .hm-key { width: 8vw; height: 10vw; max-width: 30px; max-height: 40px; font-size: 0.8rem; }
+        }
+        
+        /* Cheat Sheet */
+        .cheat-sheet { display: none; position: fixed; inset: 20px; background: var(--bg-app); border: 1px solid var(--border); z-index: 400; border-radius: 12px; padding: 24px; overflow-y: auto; }
+        .cheat-sheet.visible { display: block; }
+        .sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
+        .sheet-item { background: var(--bg-element); padding: 10px; border-radius: 6px; text-align: center; border: 1px solid transparent; }
+        .sheet-item:hover { border-color: var(--primary); background: var(--bg-active); }
+        
+        /* Keyboard */
+        .keyboard-container { display: none; background: var(--bg-panel); border-top: 1px solid var(--border); height: 200px; width: 100%; padding: 10px; flex-direction: column; justify-content: center; gap: 6px; border-radius: var(--radius-lg); }
+        .kb-row { display: flex; gap: 4px; justify-content: center; width: 100%; }
+        .kb-key { flex: 1; max-width: 40px; height: 44px; background: var(--bg-element); border: 1px solid var(--border); color: white; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .kb-key:active { background: var(--primary); border-color: var(--primary); }
+
+        /* Learn Mode Specifics */
+        .big-letter { font-size: clamp(4rem, 25vh, 10rem); font-weight: 800; color: white; position: relative; margin-bottom: 20px; }
+        
+        .v-symbol { 
+            height: 12px; 
+            border-radius: 4px; 
+            background: var(--accent); 
+            margin: 0 4px; 
+            flex-shrink: 0; 
+        }
+        .v-symbol.dot { width: 12px; }
+        .v-symbol.dash { width: 36px; }
+        .mnemonic-text { font-size: 1.2rem; color: var(--primary); font-weight: 700; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <div id="start-overlay">
+        <div class="glass-card">
+            <div class="brand" style="justify-content: center; margin-bottom: 20px;">
+                <div class="brand-dot"></div>
+                <span>Morse Pro</span>
+            </div>
+            <div class="hero-title">Learn and Practice</div>
+            <div class="hero-subtitle">High Fidelity Training</div>
+            
+            <div style="text-align: left; background: var(--bg-element); padding: 20px; border-radius: 8px; margin-bottom: 24px; color: var(--text-muted); line-height: 1.6; font-size: 0.9rem;">
+                <div style="margin-bottom: 8px;"><strong>Desktop:</strong> [Space] or [Arrow Keys] or [A, D]</div>
+                <div><strong>Mobile:</strong> Touch the paddle areas below</div>
+            </div>
+            
+            <button class="cta-btn" id="init-btn">Initialize System</button>
+        </div>
+    </div>
+
+    <!-- Game Setup Overlay -->
+    <div id="setup-overlay" style="display: none;">
+        <div class="setup-card">
+            <h2 style="font-size:1.5rem; font-weight: 700; margin-bottom:8px;">Tactical Training</h2>
+            <p style="color:var(--text-muted); margin-bottom: 24px; font-size: 0.9rem;">Configure session parameters.</p>
+            
+            <!-- Send/Receive Toggle -->
+            <div class="toggle-group" style="width: 100%; margin-bottom: 16px;">
+                <div class="toggle-opt selected" id="mode-send">Send (TX)</div>
+                <div class="toggle-opt" id="mode-recv">Receive (RX)</div>
+            </div>
+
+            <div class="toggle-group" id="mode-select-group" style="width: 100%; flex-wrap: wrap;">
+                <div class="toggle-opt" id="opt-learn">Learn</div>
+                <div class="toggle-opt selected" id="opt-words">Words</div>
+                <div class="toggle-opt" id="opt-qcodes">Q-Codes</div>
+                <div class="toggle-opt" id="opt-random">Random</div>
+            </div>
+
+            <!-- Character Type Selector -->
+            <div class="toggle-group" id="char-type-selector" style="display:none; margin-top:12px; width: 100%;">
+                <div class="toggle-opt selected multi-select" data-type="letters">ABC</div>
+                <div class="toggle-opt multi-select" data-type="numbers">123</div>
+                <div class="toggle-opt multi-select" data-type="specials">@?!</div>
+            </div>
+            
+            <!-- Hints & Farnsworth Row -->
+            <div style="display: flex; gap: 12px; width: 100%; margin-top: 16px;">
+                 <div style="flex:1;">
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; font-weight: 700;">Visual Hints</div>
+                    <div class="toggle-group" id="hints-toggle-group">
+                        <div class="toggle-opt selected" id="hints-off">Off</div>
+                        <div class="toggle-opt" id="hints-on">On</div>
+                    </div>
+                 </div>
+                 <div style="flex:1;">
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; font-weight: 700;">Farnsworth</div>
+                    <div class="toggle-group disabled" id="farnsworth-toggle-group">
+                        <div class="toggle-opt selected" id="farnsworth-off">Off</div>
+                        <div class="toggle-opt" id="farnsworth-on">On</div>
+                    </div>
+                 </div>
+            </div>
+
+            <div id="game-desc" style="margin: 24px 0; color: var(--text-muted); font-size: 0.9rem; min-height: 40px;">
+                <!-- Dynamic Text -->
+            </div>
+            
+            <div class="item-selector" style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; background: var(--bg-element); padding: 8px; border-radius: 8px;">
+                <button class="btn" id="words-minus" style="width: 40px; border:none; background: var(--bg-active);">
+                    <i data-lucide="minus" style="width:16px; height:16px;"></i>
+                </button>
+                <div class="selector-display" style="text-align: center; flex: 1;">
+                    <span id="words-count-display" class="value" style="display: block; font-size: 1.5rem; font-weight: 700; font-family: 'JetBrains Mono';">10</span>
+                    <span class="label" style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Items</span>
+                </div>
+                <button class="btn" id="words-plus" style="width: 40px; border:none; background: var(--bg-active);">
+                    <i data-lucide="plus" style="width:16px; height:16px;"></i>
+                </button>
+            </div>
+            
+            <div style="display:flex; gap:12px; width:100%;">
+                <button id="start-game-btn" class="pop-btn" style="flex:1; justify-content: center;">Start Session</button>
+                <button id="cancel-game-btn" class="btn" style="flex:1;">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- REIMAGINED Analytics Overlay -->
+    <div id="analytics-overlay" style="display: none;">
+        <div class="stats-dashboard">
+            <div class="stats-header">
+                <div class="brand">
+                     <i data-lucide="bar-chart-2" style="color:var(--primary);"></i>
+                     <span>Performance</span>
+                </div>
+                <button id="close-analytics-btn" class="btn" style="border:none; background: var(--bg-element); color: var(--text-main);">
+                    <i data-lucide="x"></i>
+                    <span>Close</span>
+                </button>
+            </div>
+
+            <!-- Top Level Metrics -->
+            <div class="metric-row">
+                <div class="metric-card">
+                    <div class="metric-label">Best WPM</div>
+                    <div class="metric-val" id="stat-best-wpm">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Accuracy</div>
+                    <div class="metric-val" id="stat-accuracy" style="color: #10b981;">100%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Training Time</div>
+                    <div class="metric-val" id="stat-total-time">0h</div>
+                </div>
+            </div>
+
+            <!-- Heatmap -->
+            <div class="heatmap-container">
+                <div style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 style="font-size:0.9rem; font-weight:700; color:var(--text-muted);">Error Heatmap</h3>
+                    <div style="font-size:0.7rem; color:var(--text-muted);">Redder = More Errors</div>
+                </div>
+                <div id="heatmap-grid" style="display:flex; flex-direction:column; gap:6px; width:100%; align-items:center;">
+                    <!-- JS Injected Rows -->
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="chart-container">
+                <h3 style="font-size:0.9rem; font-weight:700; color:var(--text-muted); margin-bottom:16px;">WPM Progression</h3>
+                <div class="chart-wrapper" style="flex:1; width: 100%; position: relative; min-height: 0;">
+                    <canvas id="wpm-chart"></canvas>
+                    <div id="no-data-msg" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:0.8rem;">Complete a session to see data</div>
+                </div>
+            </div>
+
+            <div style="text-align:center; margin-top:24px;">
+                <button id="reset-stats-btn" class="btn" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3); width: 100%; justify-content: center;">Reset All Statistics</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-results-overlay" style="display: none;">
+        <div class="glass-card">
+            <div class="hero-title">Complete</div>
+            <div class="hero-subtitle">Session Report</div>
+            
+            <div class="results-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 32px 0;">
+                <div style="background:var(--bg-active); padding:16px; border-radius:8px;">
+                    <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); font-weight: 700;">Speed</div>
+                    <div id="result-wpm" style="font-size:1.8rem; font-weight:800; color:var(--primary);">0</div>
+                </div>
+                <div style="background:var(--bg-active); padding:16px; border-radius:8px;">
+                    <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); font-weight: 700;">Errors</div>
+                    <div id="result-mistakes" style="font-size:1.8rem; font-weight:800; color:var(--danger);">0</div>
+                </div>
+                <div style="background:var(--bg-active); padding:16px; border-radius:8px;">
+                    <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); font-weight: 700;">Time</div>
+                    <div id="result-time" style="font-size:1.4rem; font-weight:700; color:var(--text-main); margin-top: 4px;">00:00</div>
+                </div>
+            </div>
+            
+            <div style="display:flex; gap:12px; width:100%; margin-top:16px;">
+                <button class="btn" onclick="closeResults()" style="flex:1; height: 48px;">Menu</button>
+                <button class="pop-btn" id="replay-result-btn" style="flex:1; height: 48px; justify-content: center; margin-top:0;">Train Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cheat Sheet -->
+    <div class="cheat-sheet" id="table-container">
+        <div style="display:flex; justify-content:space-between; margin-bottom:24px; align-items: center;">
+            <h2 style="font-size:1.5rem; font-weight:700;">Reference Table</h2>
+            <button class="btn" id="close-table-btn">Close</button>
+        </div>
+        <div class="sheet-grid" id="morse-grid"></div>
+    </div>
+
+    <div class="app-shell">
+        <header class="top-bar">
+            <div class="brand">
+                <div id="visual-indicator" class="brand-dot" title="Visual Signal"></div>
+                <span class="brand-text">Morse Pro</span>
+            </div>
+            <div class="header-actions">
+                <button id="minigame-btn" class="pop-btn">
+                    <i data-lucide="gamepad-2" style="width:20px; height:20px;"></i>
+                    <span>Training</span>
+                </button>
+
+                <button id="analytics-btn" class="btn">
+                    <i data-lucide="bar-chart-2" style="width:18px; height:18px;"></i>
+                    <span style="margin-left:8px">Stats</span>
+                </button>
+                
+                <button class="btn" id="table-btn">
+                    <i data-lucide="table-2" style="width:18px; height:18px;"></i>
+                    <span style="margin-left:8px">Ref</span>
+                </button>
+
+                <button class="btn" id="donate-btn" title="Donate">
+                     <i data-lucide="heart" style="width:18px; height:18px; color:var(--danger); fill:var(--danger);stroke:none;"></i>
+                     <span style="margin-left:8px">Donate</span>
+                </button>
+                
+                <button class="mobile-menu-btn" id="mobile-nav-toggle" title="Menu">
+                    <i data-lucide="menu" style="width:24px; height:24px;"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Monitor Area -->
+        <main class="monitor-stage">
+            <div id="output" class="output-layer"></div>
+            
+            <div id="game-active" class="layer-ui">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; width: 100%; max-width: 800px;">
+                    <button id="replay-btn" class="btn" style="height:36px; font-weight:600; background:var(--primary); color:white; border:none; display:none;">
+                        ⟳ Replay
+                    </button>
+                    <div style="font-size:0.9rem; font-weight:600; color:var(--text-muted); background: var(--bg-element); padding: 4px 12px; border-radius: 99px;">
+                        <span id="game-progress" style="color:var(--text-main);">1/10</span>
+                    </div>
+                    <button id="quit-game-btn" class="btn" style="height:36px; font-size:0.75rem; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">End Session</button>
+                </div>
+                <div style="flex:1; width: 100%;" id="current-word-display" class="game-word-display"></div>
+            </div>
+
+            <div class="monitor-toolbar">
+                <button id="backspace-btn" class="monitor-action-btn" title="Backspace">
+                    <i data-lucide="undo" style="width:24px; height:24px;"></i>
+                </button>
+                <button id="clear-output-btn" class="monitor-action-btn" title="Clear All">
+                    <i data-lucide="x-circle" style="width:24px; height:24px;"></i>
+                </button>
+            </div>
+        </main>
+
+        <!-- Controls (Drawer on Mobile) -->
+        <div class="control-deck" id="control-drawer">
+            <!-- Restored Mobile Header -->
+            <div class="drawer-header">
+                <div class="drawer-title">Controls</div>
+                <button class="drawer-close" id="drawer-close-btn">
+                    <i data-lucide="x" style="width:24px; height:24px;"></i>
+                </button>
+            </div>
+
+            <div class="control-group">
+                <span class="group-label">Audio</span>
+                <div class="range-wrapper">
+                    <div class="range-label"><span>Vol</span><span id="vol-value">40</span></div>
+                    <input type="range" id="vol-slider" min="0" max="100" value="40">
+                </div>
+                <div class="range-wrapper">
+                    <div class="range-label"><span>Freq</span><span id="tone-value">700</span></div>
+                    <input type="range" id="tone-slider" min="400" max="1200" value="700">
+                </div>
+                <button id="tone-btn" class="btn icon-btn" title="Toggle Waveform" style="width: 36px; padding: 0;">
+                    <i data-lucide="activity" style="width:18px; height:18px;"></i>
+                </button>
+            </div>
+
+            <div class="control-group" id="keyer-group">
+                <span class="group-label">Keyer</span>
+                <div class="range-wrapper">
+                    <div class="range-label"><span>WPM</span><span id="wpm-value">15</span></div>
+                    <input type="range" id="wpm-slider" min="5" max="60" value="15">
+                </div>
+                <button class="mode-btn btn" data-mode="straight">Key</button>
+                <button class="mode-btn btn" data-mode="iambic-a">Iam A</button>
+                <button class="mode-btn btn" data-mode="iambic-b">Iam B</button>
+                <button id="strict-btn" class="btn" title="Strict Timing">Strict</button>
+                <button id="inverse-btn" class="btn" title="Swap Paddles">Inv</button>
+            </div>
+        </div>
+
+        <!-- Touch Area -->
+        <div class="paddle-container" id="buttons">
+            <div class="paddle left" id="left-paddle">
+                <span>•</span>
+                <small>DIT</small>
+            </div>
+            <div class="paddle right" id="right-paddle">
+                <span>-</span>
+                <small>DAH</small>
+            </div>
+        </div>
+
+        <div class="keyboard-container" id="virtual-keyboard">
+            <div class="kb-row">
+                <button class="kb-key" data-key="Q">Q</button>
+                <button class="kb-key" data-key="W">W</button>
+                <button class="kb-key" data-key="E">E</button>
+                <button class="kb-key" data-key="R">R</button>
+                <button class="kb-key" data-key="T">T</button>
+                <button class="kb-key" data-key="Y">Y</button>
+                <button class="kb-key" data-key="U">U</button>
+                <button class="kb-key" data-key="I">I</button>
+                <button class="kb-key" data-key="O">O</button>
+                <button class="kb-key" data-key="P">P</button>
+            </div>
+            <div class="kb-row">
+                <button class="kb-key" data-key="A">A</button>
+                <button class="kb-key" data-key="S">S</button>
+                <button class="kb-key" data-key="D">D</button>
+                <button class="kb-key" data-key="F">F</button>
+                <button class="kb-key" data-key="G">G</button>
+                <button class="kb-key" data-key="H">H</button>
+                <button class="kb-key" data-key="J">J</button>
+                <button class="kb-key" data-key="K">K</button>
+                <button class="kb-key" data-key="L">L</button>
+            </div>
+            <div class="kb-row">
+                <button class="kb-key" data-key="Z">Z</button>
+                <button class="kb-key" data-key="X">X</button>
+                <button class="kb-key" data-key="C">C</button>
+                <button class="kb-key" data-key="V">V</button>
+                <button class="kb-key" data-key="B">B</button>
+                <button class="kb-key" data-key="N">N</button>
+                <button class="kb-key" data-key="M">M</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Logic -->
+    <script>
+        const MORSE_TABLE = {
+            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+            'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+            'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+            'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+            'Y': '-.--', 'Z': '--..',
+            '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+            '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+            '?': '..--..', '!': '-.-.--', '.': '.-.-.-', ':': '---...', ';': '-.-.-.',
+            '=': '-...-', '/': '-..-.', '@': '.--.-.', "'": '.----.', '-': '-....-',
+            ',': '--..--', '"': '.-..-.', '(': '-.--.', ')': '-.--.-'
+        };
+        
+        const CHAR_SETS = {
+            letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            numbers: "0123456789",
+            specials: "?!.:;=/@'-,()"
+        };
+
+        const LEARN_LEVELS = [
+            { id: 1, chars: "ET" },          
+            { id: 2, chars: "AIMN" },        
+            { id: 3, chars: "SURDKGWO" },    
+            { id: 4, chars: "HVBFLQJYPXZC" } 
+        ];
+
+        const MNEMONICS_DATA = {
+            'A': { phrase: "A-PART", hint: "Imagine an arrow point (.-)" },
+            'B': { phrase: "BAN-jo-play-ing", hint: "A banjo base and neck (-...)" },
+            'C': { phrase: "CO-ca-CO-la", hint: "Two loops (-.-.)" },
+            'D': { phrase: "DOG-did-it", hint: "Dog running holding a bone (-..)" },
+            'E': { phrase: "EH", hint: "Just a single eye (.)" },
+            'F': { phrase: "did-you-FAIL-it", hint: ".." },
+            'G': { phrase: "GOOD-GAME-now", hint: "--." },
+            'H': { phrase: "hip-pi-ty-hop", hint: "Four legs hopping (....)" },
+            'I': { phrase: "I-I", hint: "Two eyes (..)" },
+            'J': { phrase: "jet-JAY-O-WAY", hint: ".---" },
+            'K': { phrase: "KAN-ga-ROO", hint: "Kicking leg (-.-)" },
+            'L': { phrase: "li-LAC-li-ly", hint: ".-.." },
+            'M': { phrase: "MAM-MA", hint: "Two humps of M (--)" },
+            'N': { phrase: "NAN-ny", hint: "Down slope (-.)" },
+            'O': { phrase: "OH-MY-GOD", hint: "Three round donuts (---)" },
+            'P': { phrase: "a-POO-py-smell", hint: ".--." },
+            'Q': { phrase: "GOD-SAVE-the-QUEEN", hint: "--.-" },
+            'R': { phrase: "a-RACE-car", hint: ".-." },
+            'S': { phrase: "si-si-si", hint: "Three snakes (...)" },
+            'T': { phrase: "TALL", hint: "One tall T-bar (-)" },
+            'U': { phrase: "u-ni-CORN", hint: "..-" },
+            'V': { phrase: "vic-tor-y-VEE", hint: "...-" },
+            'W': { phrase: "the-WORLD-WAR", hint: ".--" },
+            'X': { phrase: "X-marks-the-SPOT", hint: "-..-" },
+            'Y': { phrase: "YELL-OW-yo-YO", hint: "-.--" },
+            'Z': { phrase: "ZINC-zoo-keep-er", hint: "--.." },
+            '1': { phrase: "ONE-dash-dash-dash", hint: ".----" },
+            '2': { phrase: "two-dots-dash-dash", hint: "..---" },
+            '3': { phrase: "three-dots-dash-dash", hint: "...--" },
+            '4': { phrase: "four-dots-and-dash", hint: "....-" },
+            '5': { phrase: "FIVE-little-dots", hint: "....." },
+            '6': { phrase: "dash-and-four-dots", hint: "-...." },
+            '7': { phrase: "dash-dash-three-dots", hint: "--..." },
+            '8': { phrase: "dash-dash-dash-two", hint: "---.." },
+            '9': { phrase: "dash-dash-dash-dash-dot", hint: "----." },
+            '0': { phrase: "ZERO-is-longest", hint: "-----" },
+            '?': { phrase: "ques-tion-MARK-ing", hint: "..--.." },
+            '!': { phrase: "EX-cla-MA-tion", hint: "-.-.--" },
+            '.': { phrase: "DOT-dot-dot-dot", hint: ".-.-.-" },
+            ',': { phrase: "COM-ma-COM-ma", hint: "--..--" },
+            '/': { phrase: "SLASH-ing-it-out", hint: "-..-." },
+            '@': { phrase: "AT-sign-at-sign", hint: ".--.-." },
+            '=': { phrase: "e-QUALS-sign-here", hint: "-...-" },
+            "'": { phrase: "A-pos-tro-PHE-now", hint: ".----." },
+            '-': { phrase: "dash-dash-dash-dash", hint: "-....-" }, 
+            '(': { phrase: "o-pen-PA-ren-thes", hint: "-.--." },
+            ')': { phrase: "close-PA-ren-thes-now", hint: "-.--.-" }
+        };
+
+        const REVERSE_MORSE = {};
+        Object.keys(MORSE_TABLE).forEach(key => REVERSE_MORSE[MORSE_TABLE[key]] = key);
+
+        const GAME_WORDS = [
+    // --- Original List ---
+    "THE", "AND", "FOR", "ARE", "BUT", "NOT", "YOU", "ALL", "ANY", "CAN",
+    "HAD", "HER", "WAS", "ONE", "OUR", "OUT", "DAY", "GET", "HAS", "HIM",
+    "HIS", "HOW", "MAN", "NEW", "NOW", "OLD", "SEE", "TWO", "WAY", "WHO",
+    "BOY", "DID", "ITS", "LET", "PUT", "SAY", "SHE", "TOO", "USE", "DAD",
+    "MORSE", "CODE", "RADIO", "SIGNAL", "SOS", "TEST", "PARIS", "HAM", "KEY", "WAVE",
+    "ALPHA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT", "GOLF", "HOTEL", "INDIA",
+    "JULIETT", "KILO", "LIMA", "MIKE", "NOVEMBER", "OSCAR", "PAPA", "QUEBEC", "ROMEO",
+    "SIERRA", "TANGO", "UNIFORM", "VICTOR", "WHISKEY", "XRAY", "YANKEE", "ZULU",
+    "ACT", "ADD", "AGE", "AIR", "AIM", "ARM", "ART", "ASH", "ASK", "ATE",
+    "AWE", "AXE", "BAD", "BAG", "BAN", "BAR", "BAT", "BAY", "BED", "BEE",
+    "BET", "BIG", "BIN", "BIT", "BOW", "BOX", "BUG", "BUS", "BUY", "CAB",
+    "CAP", "CAR", "CAT", "COW", "CRY", "CUP", "CUT", "DIM", "DOG", "DOT",
+    "DRY", "DUE", "EAR", "EAT", "EGG", "END", "ERA", "EVE", "EYE", "FAN",
+    "FAR", "FAT", "FEW", "FIT", "FIX", "FLY", "FOG", "FUN", "FUR", "GAP",
+    "GAS", "GEM", "GIG", "GOD", "GOT", "GUM", "GUN", "GUY", "HAT", "HIT",
+    "HOT", "HUG", "HUT", "ICE", "ILL", "INK", "ION", "JAR", "JOB", "JOY",
+    "KIT", "LAB", "LAW", "LAY", "LEG", "LID", "LIE", "LIP", "LOG", "LOT",
+    "LOW", "MAD", "MAP", "MAT", "MET", "MIX", "MUD", "MUG", "NAP", "NET",
+    "NIL", "NOD", "NUT", "OAK", "OFF", "OIL", "OWN", "PAD", "PAN", "PAY",
+    "PEN", "PET", "PIE", "PIG", "PIN", "PIT", "POT", "PRO", "RAM", "RAN",
+    "RAT", "RAW", "RED", "RIB", "RID", "RIG", "RIM", "RIP", "ROD", "ROT",
+    "ROW", "RUB", "RUG", "RUN", "SAD", "SAT", "SAW", "SEA", "SET", "SIT",
+    "SIX", "SKY", "SON", "SUN", "TAB", "TAG", "TAN", "TAP", "TAX", "TEA",
+    "TEN", "TIE", "TIN", "TIP", "TOE", "TOP", "TOY", "TRY", "TUB", "VAN",
+    "VET", "VIA", "WAR", "WAX", "WEB", "WET", "WIN", "WIT", "WON", "YES",
+    "YET", "ZIP", "ZOO",
+    "ABLE", "ACID", "AREA", "ARMY", "ATOM", "AUTO", "AWAY", "AXIS", "BABY", "BACK",
+    "BAIT", "BAKE", "BALL", "BAND", "BASE", "BEAM", "BEAN", "BEAR", "BEAT", "BELL",
+    "BELT", "BEST", "BIAS", "BIKE", "BILL", "BIND", "BIRD", "BITE", "BLOW", "BLUE",
+    "BOAT", "BODY", "BOLD", "BOND", "BONE", "BOOK", "BOOM", "BOOT", "BORE", "BORN",
+    "BOSS", "BOTH", "BOWL", "BULK", "BULL", "BURN", "BUSY", "CAKE", "CALL", "CAMP",
+    "CARD", "CARE", "CASE", "CASH", "CAST", "CELL", "CENT", "CITY", "CLAY", "CLUB",
+    "COAL", "COAT", "COIN", "COLD", "COME", "COOK", "COOL", "COPY", "CORE", "CORN",
+    "COST", "CROP", "DARK", "DATA", "DEAD", "DEAL", "DECK", "DEEP", "DEER", "DESK",
+    "DIAL", "DISK", "DOOR", "DOWN", "DRAW", "DROP", "DRUM", "DUCK", "DUST", "DUTY",
+    "EACH", "EARN", "EAST", "EASY", "EDGE", "EDIT", "ELSE", "EVEN", "EVER", "EXIT",
+    "FACE", "FACT", "FADE", "FAIL", "FAIR", "FALL", "FAME", "FARM", "FAST", "FATE",
+    "FEAR", "FEED", "FEEL", "FEET", "FILE", "FILL", "FILM", "FINE", "FIRE", "FIRM",
+    "FISH", "FIVE", "FLAG", "FLAT", "FLOW", "FLUX", "FOAM", "FOLD", "FOOD", "FOOT",
+    "FORM", "FORT", "FOUR", "FREE", "FROG", "FROM", "FUEL", "FULL", "FUND", "FUSE",
+    "GAIN", "GAME", "GATE", "GEAR", "GIFT", "GIVE", "GLAD", "GOAL", "GOLD", "GONE",
+    "GOOD", "GRAY", "GRID", "GROW", "HAIR", "HALL", "HAND", "HARD", "HARM", "HATE",
+    "HEAD", "HEAR", "HEAT", "HELD", "HELP", "HERO", "HIGH", "HILL", "HINT", "HIRE",
+    "HOLD", "HOLE", "HOME", "HOOK", "HOPE", "HORN", "HOST", "HOUR", "HUGE", "HULL",
+    "HUNT", "HURT", "ICON", "IDEA", "INCH", "INFO", "IRON", "ITEM", "JACK", "JAZZ",
+    "JEEP", "JOIN", "JOKE", "JUMP", "JUST", "KEEP", "KEPT", "KICK", "KILL", "KIND",
+    "KING", "KNEE", "KNOW", "LACK", "LAKE", "LAMP", "LAND", "LANE", "LAST", "LATE",
+    "LEAD", "LEAF", "LEAN", "LEFT", "LEND", "LENS", "LIFT", "LIKE", "LINE", "LINK",
+    "LION", "LIST", "LIVE", "LOAD", "LOAN", "LOCK", "LONG", "LOOK", "LOOP", "LORD",
+    "LOSS", "LOST", "LOUD", "LOVE", "LUCK", "MADE", "MAIL", "MAIN", "MAKE", "MALE",
+    "MANY", "MARK", "MASK", "MASS", "MATE", "MATH", "MEAL", "MEAT", "MEET", "MELT",
+    "MENU", "MESH", "MESS", "MILD", "MILE", "MILK", "MILL", "MIND", "MINE", "MISS",
+    "MODE", "MOON", "MORE", "MOST", "MOVE", "MUCH", "MUST", "NAME", "NAVY", "NEAR",
+    "NEAT", "NECK", "NEED", "NEST", "NEWS", "NEXT", "NICE", "NINE", "NONE", "NOON",
+    "NOSE", "NOTE", "NULL", "OKAY", "ONLY", "OPEN", "OVER", "PACE", "PACK", "PAGE",
+    "PAID", "PAIN", "PAIR", "PALM", "PARK", "PART", "PASS", "PAST", "PATH", "PEAK",
+    "PICK", "PILE", "PINE", "PINK", "PIPE", "PLAN", "PLAY", "PLOT", "PLUG", "PLUS",
+    "POLE", "POLL", "POND", "POOL", "POOR", "PORT", "POST", "PULL", "PUMP", "PURE",
+    "PUSH", "QUIT", "RACE", "RAGE", "RAIL", "RAIN", "RARE", "RATE", "READ", "REAL",
+    "REAR", "RELY", "RENT", "REST", "RICE", "RICH", "RIDE", "RING", "RISE", "RISK",
+    "ROAD", "ROCK", "ROLE", "ROLL", "ROOF", "ROOM", "ROOT", "ROPE", "ROSE", "RULE",
+    "RUSH", "SAFE", "SAIL", "SALE", "SALT", "SAME", "SAND", "SAVE", "SCAN", "SEAT",
+    "SEED", "SEEK", "SEEM", "SELF", "SELL", "SEND", "SENT", "SHIP", "SHOE", "SHOP",
+    "SHOT", "SHOW", "SHUT", "SIDE", "SIGN", "SILK", "SING", "SINK", "SITE", "SIZE",
+    "SKIN", "SKIP", "SLIP", "SLOW", "SNOW", "SOFT", "SOIL", "SOLE", "SOLO", "SONG",
+    "SOON", "SORT", "SOUL", "SOUR", "SPAN", "SPIN", "SPOT", "STAR", "STAY", "STEM",
+    "STEP", "STOP", "SUIT", "SURE", "SWIM", "TAIL", "TAKE", "TALL", "TANK", "TAPE",
+    "TASK", "TEAM", "TEAR", "TELL", "TENT", "TERM", "TEXT", "THAT", "THEM", "THEN",
+    "THIN", "THIS", "TIDE", "TILE", "TIME", "TINY", "TIRE", "TOLL", "TONE", "TOOL",
+    "TOUR", "TOWN", "TRAP", "TRAY", "TREE", "TRIP", "TRUE", "TUBE", "TUNE", "TURN",
+    "TWIN", "TYPE", "UNIT", "UPON", "USED", "USER", "VARY", "VAST", "VENT", "VERB",
+    "VERY", "VEST", "VIEW", "VOID", "VOLT", "VOTE", "WAIT", "WAKE", "WALK", "WALL",
+    "WANT", "WARM", "WARN", "WASH", "WATT", "WEAK", "WEAR", "WEEK", "WELL", "WENT",
+    "WEST", "WHAT", "WHEN", "WIDE", "WILD", "WILL", "WIND", "WINE", "WING", "WIRE",
+    "WISH", "WITH", "WOOD", "WOOL", "WORD", "WORK", "WORM", "WRAP", "YARD", "YEAR",
+    "ZERO", "ZONE",
+    "ABOUT", "ABOVE", "ACTOR", "ACUTE", "ADMIT", "ADOPT", "ADULT", "AFTER", "AGAIN", "AGENT",
+    "AGREE", "AHEAD", "ALARM", "ALBUM", "ALERT", "ALIKE", "ALIVE", "ALLOW", "ALONE", "ALONG",
+    "ALTER", "AMONG", "ANGER", "ANGLE", "ANGRY", "APART", "APPLE", "APPLY", "ARENA", "ARGUE",
+    "ARISE", "ARRAY", "ASIDE", "ASSET", "AUDIO", "AUDIT", "AVOID", "AWARD", "AWARE", "BADLY",
+    "BAKER", "BASES", "BASIC", "BASIS", "BEACH", "BEGAN", "BEGIN", "BEGUN", "BEING", "BELOW",
+    "BENCH", "BIRTH", "BLACK", "BLAME", "BLIND", "BLOCK", "BLOOD", "BOARD", "BRAIN", "BRAND",
+    "BREAD", "BREAK", "BRICK", "BRIEF", "BRING", "BROAD", "BROWN", "BRUSH", "BUILD", "BUILT",
+    "BUYER", "CABLE", "CARRY", "CATCH", "CAUSE", "CHAIN", "CHAIR", "CHART", "CHASE", "CHEAP",
+    "CHECK", "CHEST", "CHIEF", "CHILD", "CLASS", "CLEAN", "CLEAR", "CLICK", "CLOCK", "CLOSE",
+    "COACH", "COAST", "COULD", "COUNT", "COURT", "COVER", "CRAFT", "CRASH", "CREAM", "CRIME",
+    "CROSS", "CROWD", "CROWN", "CURVE", "CYCLE", "DAILY", "DANCE", "DATED", "DEALT", "DEATH",
+    "DEBUG", "DELAY", "DEPTH", "DOING", "DOUBT", "DOZEN", "DRAFT", "DRAMA", "DREAM", "DRESS",
+    "DRILL", "DRINK", "DRIVE", "DROVE", "DYING", "EAGER", "EARLY", "EARTH", "EIGHT", "ELITE",
+    "EMPTY", "ENEMY", "ENJOY", "ENTER", "ENTRY", "EQUAL", "ERROR", "EVENT", "EVERY", "EXACT",
+    "EXIST", "EXTRA", "FAITH", "FALSE", "FAULT", "FIBER", "FIELD", "FIFTH", "FIFTY", "FIGHT",
+    "FINAL", "FIRST", "FIXED", "FLASH", "FLEET", "FLOOR", "FLUID", "FOCUS", "FORCE", "FORTH",
+    "FORTY", "FORUM", "FOUND", "FRAME", "FRANK", "FRAUD", "FRESH", "FRONT", "FRUIT", "FULLY",
+    "FUNNY", "GIANT", "GIVEN", "GLASS", "GLOBE", "GOING", "GRACE", "GRADE", "GRAND", "GRANT",
+    "GRASS", "GREAT", "GREEN", "GROSS", "GROUP", "GROWN", "GUARD", "GUESS", "GUEST", "GUIDE",
+    "HAPPY", "HEART", "HEAVY", "HELLO", "HENCE", "HORSE", "HOUSE", "HUMAN", "IDEAL", "IMAGE",
+    "INDEX", "INNER", "INPUT", "ISSUE", "JAPAN", "JOINT", "JUDGE", "KNIFE", "KNOCK", "KNOWN",
+    "LABEL", "LARGE", "LASER", "LATER", "LAUGH", "LAYER", "LEARN", "LEASE", "LEAST", "LEAVE",
+    "LEGAL", "LEVEL", "LIGHT", "LIMIT", "LINKS", "LIVER", "LOCAL", "LOGIC", "LOOSE", "LOWER",
+    "LUCKY", "LUNCH", "LYING", "MAGIC", "MAKER", "MARCH", "MATCH", "MAYBE", "MAYOR", "MEANT",
+    "MEDIA", "METAL", "MIGHT", "MINOR", "MINUS", "MODEL", "MONEY", "MONTH", "MORAL", "MOTOR",
+    "MOUNT", "MOUSE", "MOUTH", "MOVIE", "MUSIC", "NEEDS", "NEVER", "NIGHT", "NOISE", "NORTH",
+    "NOTED", "NOTES", "NOVEL", "NURSE", "OCCUR", "OCEAN", "OFFER", "OFTEN", "ORDER", "OTHER",
+    "OUTER", "PAINT", "PANEL", "PAPER", "PARTY", "PAUSE", "PEACE", "PHASE", "PHONE", "PHOTO",
+    "PIECE", "PILOT", "PITCH", "PLACE", "PLAIN", "PLANE", "PLANT", "PLATE", "POINT", "POUND",
+    "POWER", "PRESS", "PRICE", "PRIDE", "PRIME", "PRINT", "PRIOR", "PRIZE", "PROOF", "PROUD",
+    "PROVE", "QUEEN", "QUICK", "QUIET", "QUITE", "RAISE", "RANGE", "RAPID", "RATIO", "REACH",
+    "READY", "REFER", "RIGHT", "RIVAL", "RIVER", "ROBOT", "ROGER", "ROUND", "ROUTE", "ROYAL",
+    "RURAL", "SCALE", "SCENE", "SCOPE", "SCORE", "SENSE", "SERVE", "SEVEN", "SHALL", "SHAPE",
+    "SHARE", "SHARP", "SHEET", "SHELF", "SHELL", "SHIFT", "SHIRT", "SHOCK", "SHOOT", "SHORT",
+    "SHOWN", "SIGHT", "SINCE", "SIXTH", "SIXTY", "SKILL", "SLEEP", "SLIDE", "SMALL", "SMART",
+    "SMILE", "SMITH", "SMOKE", "SOLID", "SOLVE", "SORRY", "SOUND", "SOUTH", "SPACE", "SPARE",
+    "SPEAK", "SPEED", "SPEND", "SPENT", "SPLIT", "SPOKE", "SPORT", "STAFF", "STAGE", "STAKE",
+    "STAND", "START", "STATE", "STEAM", "STEEL", "STICK", "STILL", "STOCK", "STONE", "STORE",
+    "STORM", "STORY", "STRIP", "STUCK", "STUDY", "STUFF", "STYLE", "SUGAR", "SUITE", "SUPER",
+    "SWEET", "TABLE", "TAKEN", "TASTE", "TAXES", "TEACH", "TEETH", "THANK", "THEFT", "THEIR",
+    "THEME", "THERE", "THESE", "THICK", "THING", "THINK", "THIRD", "THOSE", "THREE", "THREW",
+    "THROW", "TIGHT", "TIMES", "TIRED", "TITLE", "TODAY", "TOPIC", "TOUCH", "TOWER", "TRACK",
+    "TRADE", "TRAIN", "TREAT", "TRUCK", "TRULY", "TRUST", "TRUTH", "TRIES", "TWICE", "UNDER",
+    "UNDUE", "UNION", "UNITY", "UNTIL", "UPPER", "UPSET", "URBAN", "USAGE", "USUAL", "VALID",
+    "VALUE", "VIDEO", "VIRUS", "VISIT", "VITAL", "VOICE", "WASTE", "WATCH", "WATER", "WHEEL",
+    "WHERE", "WHICH", "WHILE", "WHITE", "WHOLE", "WHOSE", "WOMAN", "WOMEN", "WORLD", "WORRY",
+    "WORSE", "WORST", "WORTH", "WOULD", "WOUND", "WRITE", "WRONG", "YIELD", "YOUNG", "YOUTH"
+];
+        
+        const Q_CODES = [
+            // --- Signal & Interference ---
+            { code: "QRG", meaning: "Your exact frequency" },
+            { code: "QRH", meaning: "Frequency is varying" },
+            { code: "QRI", meaning: "Tone of transmission" },
+            { code: "QRK", meaning: "Readability of signals (1-5)" },
+            { code: "QRL", meaning: "Are you busy?" },
+            { code: "QRM", meaning: "Interference (Man-made)" },
+            { code: "QRN", meaning: "Static (Atmospheric)" },
+            { code: "QRO", meaning: "High Power / Increase power" },
+            { code: "QRP", meaning: "Low Power / Decrease power" },
+            { code: "QRQ", meaning: "Send Faster" },
+            { code: "QRS", meaning: "Send Slower" },
+            { code: "QRT", meaning: "Stop Transmitting" },
+            { code: "QRU", meaning: "Have you anything for me?" },
+            { code: "QRV", meaning: "Ready" },
+            { code: "QRW", meaning: "Inform ... that I am calling" },
+            { code: "QRX", meaning: "Stand By / Wait" },
+            { code: "QRY", meaning: "Your turn is number ..." },
+            { code: "QRZ", meaning: "Who is calling me?" },
+            { code: "QSA", meaning: "Signal Strength (1-5)" },
+            { code: "QSB", meaning: "Fading Signal" },
+            { code: "QSD", meaning: "Keying is defective" },
+
+            // --- Operations & Message Handling ---
+            { code: "QSG", meaning: "Send ... messages at a time" },
+            { code: "QSK", meaning: "Can you hear me between signals? (Break-in)" },
+            { code: "QSL", meaning: "Acknowledge Receipt" },
+            { code: "QSM", meaning: "Repeat last message" },
+            { code: "QSN", meaning: "Did you hear me?" },
+            { code: "QSO", meaning: "Contact / Conversation" },
+            { code: "QSP", meaning: "Relay message" },
+            { code: "QSR", meaning: "Repeat your call" },
+            { code: "QSS", meaning: "Working frequency" },
+            { code: "QSU", meaning: "Reply on this frequency" },
+            { code: "QSV", meaning: "Send V's (for tuning)" },
+            { code: "QSW", meaning: "Will send on this frequency" },
+            { code: "QSX", meaning: "Listen to ..." },
+            { code: "QSY", meaning: "Change Frequency" },
+            { code: "QSZ", meaning: "Send each word/group twice" },
+
+            // --- Location, Time, Movement ---
+            { code: "QRA", meaning: "Name of station" },
+            { code: "QRB", meaning: "Distance between us" },
+            { code: "QRD", meaning: "Where are you bound?" },
+            { code: "QRE", meaning: "Estimated Time of Arrival (ETA)" },
+            { code: "QRF", meaning: "Returning to ..." },
+            { code: "QTH", meaning: "Location / Position" },
+            { code: "QTI", meaning: "Course (True)" },
+            { code: "QTJ", meaning: "Speed" },
+            { code: "QTL", meaning: "Heading (True)" },
+            { code: "QTR", meaning: "Time" },
+
+            // --- Messages & Traffic ---
+            { code: "QTA", meaning: "Cancel message" },
+            { code: "QTB", meaning: "Disagreement on word count" },
+            { code: "QTC", meaning: "Have messages to send" },
+            { code: "QTE", meaning: "True bearing" },
+            { code: "QTF", meaning: "Position by direction finding" },
+            { code: "QTG", meaning: "Send two dashes for tuning" },
+            { code: "QTX", meaning: "Keep station open for ..." },
+            { code: "QUA", meaning: "Have you news of ...?" },
+            { code: "QUC", meaning: "Number of last message" },
+            { code: "QUD", meaning: "Received urgent signal" },
+            { code: "QUF", meaning: "Received distress signal" },
+            { code: "QUM", meaning: "Distress traffic ended" }
+        ];
+
+        const DESCRIPTIONS = {
+            learn: "Visual mnemonic training. Progress saved automatically.",
+            words: "Send the words you see on the screen.",
+            qcodes: "See a definition, send the Q-Code.",
+            random: "Practice sending random character groups."
+        };
+        
+        const RX_DESCRIPTIONS = {
+             words: "Listen to the word and type it out.",
+             qcodes: "Listen to the Q-Code and type it.",
+             random: "Listen to random groups and transcribe them."
+        };
+
+        // ... (Settings and state - same as before) ...
+        let settings = {
+            mode: 'iambic-a', 
+            toneType: 'sine',
+            wpm: 15,
+            vol: 40,
+            tone: 700,
+            polarity: 'normal',
+            strict: false,
+            visual: false,
+            farnsworth: false,
+            charTypes: { letters: true, numbers: false, specials: false }
+        };
+
+        let userStats = { 
+            wpmHistory: [], 
+            qcodeHistory: [], 
+            missedLetters: {}, 
+            slowLetters: {}, 
+            learnIndex: 0,
+            totalPlayTime: 0 // New field
+        };
+        
+        let gameState = {
+            active: false,
+            gameMode: 'words',
+            trainingType: 'send',
+            hintsEnabled: false,
+            items: [],
+            currentItemIndex: 0,
+            currentCharIndex: 0,
+            mistakes: 0,
+            startTime: 0,
+            totalChars: 0,
+            targetCount: 10,
+            lastInputTime: 0,
+            isPlayingAudio: false
+        };
+
+        let morseState = {
+            currentCode: '',
+            lastElementTime: 0,
+            isTransmitting: false,
+            lastElement: '',
+            letterTimeout: null,
+            wordTimeout: null,
+            iambicScheduled: false
+        };
+
+        let paddleState = {
+            ditCurrentlyPressed: false,
+            dahCurrentlyPressed: false,
+            ditPressedDuringElement: false,
+            dahPressedDuringElement: false,
+            squeezeCurrentlyPressed: false,
+            squeezePressedDuringElement: false
+        };
+
+        let audioContext = null;
+        let osc = null;
+        let gain = null;
+
+        function loadData() {
+            try {
+                const s = localStorage.getItem('morseProSettings');
+                if(s) settings = { ...settings, ...JSON.parse(s) };
+                if (settings.polarity !== 'normal' && settings.polarity !== 'inverse') settings.polarity = 'normal';
+                if(!settings.charTypes) settings.charTypes = { letters: true, numbers: false, specials: false };
+                const st = localStorage.getItem('morseProStats');
+                if(st) {
+                    const parsed = JSON.parse(st);
+                    userStats = {
+                        wpmHistory: parsed.wpmHistory || [],
+                        qcodeHistory: parsed.qcodeHistory || [],
+                        missedLetters: parsed.missedLetters || {},
+                        slowLetters: parsed.slowLetters || {},
+                        learnIndex: parsed.learnIndex || 0,
+                        totalPlayTime: parsed.totalPlayTime || 0
+                    };
+                }
+            } catch(e) { console.warn(e); }
+        }
+
+        function saveData() {
+            localStorage.setItem('morseProSettings', JSON.stringify(settings));
+        }
+        
+        function saveStats() {
+            localStorage.setItem('morseProStats', JSON.stringify(userStats));
+        }
+
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => console.log("Audio Context Force Resumed"));
+            }
+            if (osc) { 
+                try { osc.stop(); osc.disconnect(); gain.disconnect(); } catch(e) {}
+            }
+            osc = audioContext.createOscillator();
+            gain = audioContext.createGain();
+            osc.type = settings.toneType;
+            osc.frequency.value = settings.tone;
+            gain.gain.value = 0;
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.start();
+        }
+
+        function playTone() {
+            const indicator = document.getElementById('visual-indicator');
+            indicator.style.background = `var(--primary)`;
+            indicator.style.opacity = "1";
+            
+            if (!audioContext || !gain) return;
+            if (audioContext.state === 'suspended') audioContext.resume();
+            const divider = settings.toneType === 'sawtooth' ? 250 : 50;
+            gain.gain.cancelScheduledValues(audioContext.currentTime);
+            gain.gain.setTargetAtTime(settings.vol / divider, audioContext.currentTime, 0.005);
+        }
+
+        function stopTone() {
+            const indicator = document.getElementById('visual-indicator');
+            indicator.style.background = `var(--primary)`;
+            indicator.style.opacity = "0.3";
+            
+            if (!audioContext || !gain) return;
+            gain.gain.setTargetAtTime(0.00001, audioContext.currentTime, 0.005);
+        }
+
+        let audioQueueTimeout = null;
+        let isPlayingSequence = false;
+
+        async function playMorseWord(word) {
+            if (isPlayingSequence) return;
+            isPlayingSequence = true;
+            await new Promise(r => audioQueueTimeout = setTimeout(r, 500));
+            for (let i = 0; i < word.length; i++) {
+                if (!gameState.active) break;
+                const char = word[i].toUpperCase();
+                const code = MORSE_TABLE[char];
+                if (code) {
+                    await playMorseChar(code);
+                    await wait(getTimings().letterGap); 
+                }
+            }
+            isPlayingSequence = false;
+        }
+
+        async function playMorseChar(code) {
+            for (let i = 0; i < code.length; i++) {
+                if (!gameState.active) return;
+                const symbol = code[i];
+                const t = getTimings();
+                playTone();
+                await wait(symbol === '.' ? t.dit : t.dah);
+                stopTone();
+                if (i < code.length - 1) await wait(t.elementGap);
+            }
+        }
+
+        function wait(ms) {
+            return new Promise(resolve => audioQueueTimeout = setTimeout(resolve, ms));
+        }
+        
+        function stopAudioPlayback() {
+            clearTimeout(audioQueueTimeout);
+            stopTone();
+            isPlayingSequence = false;
+        }
+
+        function getTimings() {
+            let charWpm = settings.wpm;
+            let spacingWpm = settings.wpm;
+
+            if (settings.farnsworth && settings.wpm < 20 && (gameState.trainingType === 'recv' || isPlayingSequence)) {
+                charWpm = 20; 
+                spacingWpm = settings.wpm; 
+            }
+
+            const t_char = 1200 / charWpm;
+            const t_space = 1200 / spacingWpm;
+
+            return {
+                dit: t_char,
+                dah: t_char * 3,
+                elementGap: t_char,
+                letterGap: t_space * 3,
+                wordGap: t_space * 7
+            };
+        }
+
+        function processInput(char) {
+            if(gameState.active && gameState.trainingType === 'send') {
+                handleMinigameInput(char);
+            } else {
+                if(char) {
+                    const out = document.getElementById('output');
+                    out.textContent += char;
+                    out.scrollTop = out.scrollHeight;
+                }
+            }
+        }
+
+        function handlePaddle(side, pressed) {
+            // FIX: Allow interaction in Receive mode to prevent confusion, but don't output
+            if (gameState.active && gameState.trainingType === 'recv') return; 
+
+            const paddle = document.getElementById(side + '-paddle');
+            if(pressed) {
+                paddle.classList.add('pressed');
+                if(settings.polarity === 'normal') {
+                    if(side === 'left') paddleState.ditCurrentlyPressed = true;
+                    else paddleState.dahCurrentlyPressed = true;
+                } else {
+                    if(side === 'left') paddleState.dahCurrentlyPressed = true;
+                    else paddleState.ditCurrentlyPressed = true;
+                }
+                
+                // Check if transmission is active to set memory
+                if(morseState.isTransmitting || morseState.iambicScheduled) {
+                    if(settings.polarity === 'normal') {
+                        if(side === 'left') paddleState.ditPressedDuringElement = true;
+                        else paddleState.dahPressedDuringElement = true;
+                    } else {
+                        if(side === 'left') paddleState.dahPressedDuringElement = true;
+                        else paddleState.ditPressedDuringElement = true;
+                    }
+                }
+                
+                // BUG FIX: Squeeze state MUST be calculated BEFORE starting logic
+                paddleState.squeezeCurrentlyPressed = paddleState.ditCurrentlyPressed && paddleState.dahCurrentlyPressed;
+
+                if(settings.mode === 'straight' && side === 'left') {
+                    handleStraightKey(true);
+                    return;
+                }
+                // Only start if not already going
+                if(!morseState.isTransmitting && !morseState.iambicScheduled) startIambic();
+            } else {
+                paddle.classList.remove('pressed');
+                if(settings.polarity === 'normal') {
+                    if(side === 'left') paddleState.ditCurrentlyPressed = false;
+                    else paddleState.dahCurrentlyPressed = false;
+                } else {
+                    if(side === 'left') paddleState.dahCurrentlyPressed = false;
+                    else paddleState.ditCurrentlyPressed = false;
+                }
+                paddleState.squeezeCurrentlyPressed = paddleState.ditCurrentlyPressed && paddleState.dahCurrentlyPressed;
+
+                if(settings.mode === 'straight' && side === 'left') {
+                    handleStraightKey(false);
+                }
+            }
+        }
+
+        function handleStraightKey(down) {
+            const now = performance.now();
+            const timings = getTimings();
+            if(down) {
+                clearTimeout(morseState.letterTimeout);
+                clearTimeout(morseState.wordTimeout);
+                if(!morseState.isTransmitting) {
+                    morseState.isTransmitting = true;
+                    morseState.lastElementTime = now;
+                    playTone();
+                }
+            } else {
+                if(morseState.isTransmitting) {
+                    morseState.isTransmitting = false;
+                    stopTone();
+                    const dur = now - morseState.lastElementTime;
+                    morseState.currentCode += (dur < (timings.dit + timings.dah)/2) ? '.' : '-';
+                    morseState.lastElementTime = now;
+                    startDecayTimers();
+                }
+            }
+        }
+
+        function startIambic() {
+            if(morseState.isTransmitting) return; // Guard
+            clearTimeout(morseState.letterTimeout);
+            clearTimeout(morseState.wordTimeout);
+
+            const squeeze = paddleState.squeezeCurrentlyPressed || paddleState.squeezePressedDuringElement;
+            const dit = paddleState.ditCurrentlyPressed || paddleState.ditPressedDuringElement;
+            const dah = paddleState.dahCurrentlyPressed || paddleState.dahPressedDuringElement;
+            
+            let char = '';
+            // Iambic logic
+            if(squeeze || (morseState.lastElement === '.' && dit && dah && settings.mode === 'iambic-b')) {
+                 char = (morseState.lastElement === '.') ? '-' : '.';
+            } else if(dit) {
+                char = '.';
+            } else if(dah) {
+                char = '-';
+            } else {
+                // Nothing pressed or remembered, stop.
+                startDecayTimers();
+                return;
+            }
+            
+            morseState.isTransmitting = true;
+            morseState.lastElement = char;
+            
+            // Clear memory for Mode A immediately
+            if(settings.mode === 'iambic-a') {
+                paddleState.ditPressedDuringElement = false;
+                paddleState.dahPressedDuringElement = false;
+            }
+            
+            const timings = getTimings();
+            playTone();
+            
+            setTimeout(() => {
+                stopTone();
+                morseState.isTransmitting = false;
+                morseState.currentCode += char;
+                
+                // Clear memory for Mode B after element
+                if(settings.mode === 'iambic-b') {
+                    if(char === '.') paddleState.ditPressedDuringElement = false;
+                    else paddleState.dahPressedDuringElement = false;
+                }
+                
+                morseState.iambicScheduled = true;
+                setTimeout(() => {
+                    morseState.iambicScheduled = false;
+                    startIambic();
+                }, timings.elementGap);
+            }, char === '.' ? timings.dit : timings.dah);
+        }
+
+        function startDecayTimers() {
+            const t = getTimings();
+            // RELAXED STRICTNESS: Increased from 0.75 to 1.1 to be more tolerant of sloppiness
+            const gapThreshold = t.letterGap * 1.1; 
+
+            morseState.letterTimeout = setTimeout(() => {
+                if(morseState.currentCode) {
+                    const char = REVERSE_MORSE[morseState.currentCode];
+                    processInput(char || '?');
+                    morseState.currentCode = '';
+                    if(!gameState.active) {
+                        morseState.wordTimeout = setTimeout(() => {
+                            const out = document.getElementById('output');
+                            if(out.textContent.length > 0 && !out.textContent.endsWith(' ')) {
+                                out.textContent += ' ';
+                            }
+                        }, t.wordGap - gapThreshold);
+                    }
+                }
+            }, gapThreshold);
+        }
+
+        let setupMode = 'words';
+        let setupType = 'send';
+        let setupHints = false;
+
+        function generateAdaptiveRandomString(length, pool) {
+             if(!pool || pool.length === 0) pool = CHAR_SETS.letters.split('');
+            
+            let weightedPool = [...pool];
+            Object.entries(userStats.missedLetters).forEach(([char, count]) => {
+                if(pool.includes(char)) {
+                    const copies = Math.min(count * 2, 15); 
+                    for(let i=0; i<copies; i++) weightedPool.push(char);
+                }
+            });
+            
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += weightedPool[Math.floor(Math.random() * weightedPool.length)];
+            }
+            return result;
+        }
+
+        function updateInputMethod() {
+            const paddles = document.getElementById('buttons');
+            const keyboard = document.getElementById('virtual-keyboard');
+            if (gameState.active && gameState.trainingType === 'recv') {
+                paddles.style.display = 'none';
+                keyboard.style.display = 'flex';
+            } else {
+                paddles.style.display = 'flex';
+                keyboard.style.display = 'none';
+            }
+        }
+        
+        function getSelectedPool() {
+            let poolStr = "";
+            if(settings.charTypes.letters) poolStr += CHAR_SETS.letters;
+            if(settings.charTypes.numbers) poolStr += CHAR_SETS.numbers;
+            if(settings.charTypes.specials) poolStr += CHAR_SETS.specials;
+            if(poolStr === "") poolStr = CHAR_SETS.letters;
+            return poolStr.split('');
+        }
+
+        function startMinigame() {
+            gameState.active = true;
+            gameState.gameMode = setupMode;
+            gameState.trainingType = setupType;
+            gameState.hintsEnabled = setupHints;
+            
+            if (setupMode === 'learn') {
+                let learnSeq = "";
+                if(settings.charTypes.letters) learnSeq += LEARN_LEVELS.map(l => l.chars).join(''); 
+                if(settings.charTypes.numbers) learnSeq += CHAR_SETS.numbers;
+                if(settings.charTypes.specials) learnSeq += CHAR_SETS.specials;
+
+                gameState.items = [];
+                learnSeq.split('').forEach(c => {
+                    for(let i=0; i<3; i++) {
+                        gameState.items.push({ 
+                            target: c, 
+                            hint: MNEMONICS_DATA[c] || { phrase: "", hint: "" } 
+                        });
+                    }
+                });
+                
+                gameState.currentItemIndex = userStats.learnIndex || 0;
+                if(gameState.currentItemIndex >= gameState.items.length) {
+                    gameState.currentItemIndex = 0;
+                }
+
+            } else if (setupMode === 'words') {
+                const adaptiveWords = GAME_WORDS.sort(() => 0.5 - Math.random()).slice(0, gameState.targetCount);
+                gameState.items = adaptiveWords.map(w => ({ target: w, hint: null }));
+                gameState.currentItemIndex = 0;
+            } else if (setupMode === 'random') {
+                const randomItems = [];
+                const activePool = getSelectedPool();
+                for(let i=0; i<gameState.targetCount; i++) {
+                    randomItems.push({ target: generateAdaptiveRandomString(5, activePool), hint: null });
+                }
+                gameState.items = randomItems;
+                gameState.currentItemIndex = 0;
+            } else {
+                const rawCodes = [...Q_CODES].sort(() => 0.5 - Math.random()).slice(0, gameState.targetCount);
+                gameState.items = rawCodes.map(q => ({ target: q.code, hint: q.meaning }));
+                gameState.currentItemIndex = 0;
+            }
+            
+            gameState.currentCharIndex = 0;
+            gameState.mistakes = 0;
+            gameState.totalChars = 0;
+            gameState.startTime = Date.now();
+            
+            document.getElementById('setup-overlay').style.display = 'none';
+            document.getElementById('game-results-overlay').style.display = 'none';
+            document.getElementById('game-active').style.display = 'flex';
+            document.getElementById('output').style.display = 'none';
+            document.getElementById('control-drawer').classList.remove('open');
+            
+            updateInputMethod();
+            
+            document.getElementById('replay-btn').style.display = (setupType === 'recv') ? 'block' : 'none';
+
+            loadNewWord();
+        }
+
+        // Helper to load word and start audio if needed
+        function loadNewWord() {
+            if (gameState.gameMode === 'learn') {
+                renderLearnScreen();
+            } else {
+                // Play audio only on new word load in Receive mode
+                const shouldPlay = gameState.trainingType === 'recv';
+                renderGameWord(shouldPlay);
+            }
+        }
+        
+        function renderLearnScreen() {
+            const item = gameState.items[gameState.currentItemIndex];
+            const char = item.target;
+            const display = document.getElementById('current-word-display');
+            
+            document.getElementById('game-progress').textContent = `${gameState.currentItemIndex + 1}/${gameState.items.length}`;
+            display.innerHTML = '';
+            
+            const card = document.createElement('div');
+            card.className = 'mnemonic-card';
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.alignItems = 'center';
+            card.style.justifyContent = 'center';
+            card.style.height = '100%';
+            
+            const letterBox = document.createElement('div');
+            letterBox.className = 'big-letter';
+            letterBox.textContent = char;
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'visual-overlay';
+            overlay.style.position = 'absolute';
+            overlay.style.top = '50%';
+            overlay.style.left = '50%';
+            overlay.style.transform = 'translate(-50%, -50%)';
+            overlay.style.display = 'flex';
+            overlay.style.alignItems = 'center';
+            overlay.style.justifyContent = 'center';
+            overlay.style.width = 'max-content'; 
+            overlay.style.pointerEvents = 'none';
+            
+            const code = MORSE_TABLE[char];
+            code.split('').forEach(s => {
+                const symbol = document.createElement('div');
+                symbol.className = `v-symbol ${s === '.' ? 'dot' : 'dash'}`;
+                overlay.appendChild(symbol);
+            });
+            letterBox.appendChild(overlay);
+            
+            if(item.hint.phrase) {
+                const phrase = document.createElement('div');
+                phrase.className = 'mnemonic-text';
+                phrase.textContent = item.hint.phrase;
+                card.appendChild(phrase);
+            }
+
+            if(item.hint.hint) {
+                const sub = document.createElement('div');
+                sub.style.color = "var(--text-muted)";
+                sub.textContent = item.hint.hint;
+                card.appendChild(sub);
+            }
+
+            card.appendChild(letterBox);
+            display.appendChild(card);
+
+            setTimeout(() => {
+                playMorseWord(char);
+            }, 500);
+        }
+
+        function renderGameWord(playAudio = false) {
+            const item = gameState.items[gameState.currentItemIndex];
+            const display = document.getElementById('current-word-display');
+            display.innerHTML = '';
+            
+            document.getElementById('game-progress').textContent = `${gameState.currentItemIndex + 1}/${gameState.targetCount}`;
+
+            if (item.hint) {
+                const hintDiv = document.createElement('div');
+                hintDiv.style.fontSize = "1.2rem";
+                hintDiv.style.color = "var(--primary)";
+                hintDiv.style.marginBottom = "20px";
+                hintDiv.textContent = item.hint;
+                display.appendChild(hintDiv);
+            }
+
+            const nodesContainer = document.createElement('div');
+            nodesContainer.style.fontSize = "3rem";
+            nodesContainer.style.display = "flex";
+            nodesContainer.style.gap = "4px";
+            nodesContainer.style.flexWrap = "wrap";
+            nodesContainer.style.justifyContent = "center";
+            nodesContainer.style.fontFamily = "'JetBrains Mono', monospace";
+            
+            item.target.split('').forEach((char, idx) => {
+                const s = document.createElement('span');
+                s.textContent = char;
+                s.className = 'char-node';
+                s.style.position = 'relative';
+                
+                if (gameState.trainingType === 'recv') {
+                    // Hide future letters, show past/current
+                    // Logic: If already correctly typed (idx < currentCharIndex), show green (handled by 'correct' class).
+                    // If current (idx === currentCharIndex), it's the one we are typing.
+                    // But in RX mode we usually hide untyped letters.
+                    // The 'correct' class colors it green. We just need to ensure transparent base.
+                    s.style.color = "transparent";
+                    s.style.borderBottom = "2px solid rgba(255,255,255,0.2)";
+                }
+                
+                if (gameState.trainingType === 'send' && gameState.hintsEnabled && gameState.gameMode !== 'learn') {
+                    const popup = document.createElement('span');
+                    popup.className = 'visual-hint-popup';
+                    popup.textContent = MORSE_TABLE[char];
+                    s.appendChild(popup);
+                }
+                
+                if(idx < gameState.currentCharIndex) {
+                    s.classList.add('correct');
+                    s.style.color = "#10b981";
+                    s.style.borderBottom = "none";
+                }
+                
+                if(idx === gameState.currentCharIndex) {
+                    s.classList.add('active');
+                    if (gameState.trainingType === 'recv') {
+                         s.style.borderBottomColor = "var(--primary)";
+                    }
+                }
+                nodesContainer.appendChild(s);
+            });
+            display.appendChild(nodesContainer);
+            
+            if (playAudio && gameState.trainingType === 'recv') {
+                stopAudioPlayback();
+                playMorseWord(item.target);
+            }
+        }
+        
+        function handleKeyboardRx(key) {
+            if (!gameState.active || gameState.trainingType !== 'recv') return;
+            const char = key.toUpperCase();
+            if (!/^[A-Z0-9.,?'!/()&:;=+-_"$@]$/.test(char)) return;
+            handleMinigameInput(char);
+        }
+
+        function handleMinigameInput(char) {
+            const item = gameState.items[gameState.currentItemIndex];
+            let targetChar;
+            if (gameState.gameMode === 'learn') targetChar = item.target; 
+            else targetChar = item.target[gameState.currentCharIndex];
+            
+            if(char === targetChar) {
+                if (gameState.gameMode === 'learn') {
+                     const card = document.querySelector('.mnemonic-card');
+                     card.style.transform = "scale(1.1)";
+                     card.style.opacity = "0";
+                     card.style.transition = "all 0.2s ease-in";
+                     setTimeout(() => {
+                         gameState.currentItemIndex++;
+                         if(gameState.gameMode === 'learn') {
+                             userStats.learnIndex = gameState.currentItemIndex;
+                             saveStats();
+                         }
+                         if(gameState.currentItemIndex >= gameState.items.length) {
+                             finishGame();
+                         } else {
+                             renderLearnScreen();
+                         }
+                     }, 250);
+                } else {
+                    gameState.currentCharIndex++;
+                    gameState.totalChars++;
+                    if(gameState.currentCharIndex >= item.target.length) {
+                        // Word Finished
+                        // Render one last time to show full green word
+                        renderGameWord(false); 
+
+                        // Increased delay for RX mode to 1.5s
+                        const delay = (gameState.trainingType === 'recv') ? 1500 : 200;
+                        
+                        setTimeout(() => {
+                            gameState.currentItemIndex++;
+                            gameState.currentCharIndex = 0;
+                            if(gameState.currentItemIndex >= gameState.items.length) {
+                                finishGame();
+                            } else {
+                                loadNewWord();
+                            }
+                        }, delay);
+                    } else {
+                         // Correct letter, update UI, DO NOT PLAY AUDIO
+                         renderGameWord(false); 
+                    }
+                }
+            } else {
+                gameState.mistakes++;
+                if (gameState.gameMode === 'learn') {
+                    stopAudioPlayback();
+                    playMorseWord(targetChar);
+                } else {
+                    const chars = document.querySelectorAll('.char-node');
+                    const active = chars[gameState.currentCharIndex];
+                    if(active) {
+                        active.classList.add('wrong');
+                        setTimeout(() => active.classList.remove('wrong'), 400);
+                    }
+                }
+                userStats.missedLetters[targetChar] = (userStats.missedLetters[targetChar] || 0) + 1;
+                saveStats();
+            }
+        }
+
+        function finishGame() {
+            gameState.active = false;
+            stopAudioPlayback();
+            
+            const elapsedTime = Date.now() - gameState.startTime;
+            userStats.totalPlayTime = (userStats.totalPlayTime || 0) + elapsedTime;
+
+            const mins = elapsedTime / 60000;
+            const wpm = Math.round((gameState.totalChars / 5) / mins);
+            const val = isFinite(wpm) ? wpm : 0;
+            
+            document.getElementById('result-wpm').textContent = val;
+            document.getElementById('result-mistakes').textContent = gameState.mistakes;
+            
+            const secs = Math.floor(elapsedTime / 1000);
+            document.getElementById('result-time').textContent = `${Math.floor(secs/60)}:${(secs%60).toString().padStart(2,'0')}`;
+            
+            document.getElementById('game-results-overlay').style.display = 'flex';
+            document.getElementById('game-active').style.display = 'none';
+            document.getElementById('minigame-btn').classList.remove('active-state');
+            document.getElementById('buttons').style.display = 'flex';
+            document.getElementById('virtual-keyboard').style.display = 'none';
+            document.getElementById('output').style.display = 'flex';
+            
+            if (gameState.gameMode === 'qcodes') {
+                userStats.qcodeHistory.push(val);
+                if(userStats.qcodeHistory.length > 50) userStats.qcodeHistory.shift();
+            } else if (gameState.gameMode === 'words' || gameState.gameMode === 'random') {
+                userStats.wpmHistory.push(val);
+                if(userStats.wpmHistory.length > 50) userStats.wpmHistory.shift();
+            }
+            saveStats();
+        }
+
+        function initUI() {
+            const drawer = document.getElementById('control-drawer');
+            const toggleBtn = document.getElementById('mobile-nav-toggle');
+            const closeBtn = document.getElementById('drawer-close-btn');
+
+            const toggleMenu = () => drawer.classList.toggle('open');
+            toggleBtn.onclick = toggleMenu;
+            closeBtn.onclick = () => drawer.classList.remove('open');
+
+            const vSlider = document.getElementById('vol-slider');
+            vSlider.value = settings.vol;
+            document.getElementById('vol-value').textContent = settings.vol;
+            vSlider.oninput = (e) => {
+                settings.vol = parseInt(e.target.value);
+                document.getElementById('vol-value').textContent = settings.vol;
+                saveData();
+            };
+
+            const tSlider = document.getElementById('tone-slider');
+            tSlider.value = settings.tone;
+            document.getElementById('tone-value').textContent = settings.tone;
+            tSlider.oninput = (e) => {
+                settings.tone = parseInt(e.target.value);
+                document.getElementById('tone-value').textContent = settings.tone;
+                if(osc) osc.frequency.value = settings.tone;
+                saveData();
+            };
+
+            const wSlider = document.getElementById('wpm-slider');
+            wSlider.value = settings.wpm;
+            document.getElementById('wpm-value').textContent = settings.wpm;
+            wSlider.oninput = (e) => {
+                settings.wpm = parseInt(e.target.value);
+                document.getElementById('wpm-value').textContent = settings.wpm;
+                saveData();
+            };
+
+            const updatePaddleText = () => {
+                const lText = document.querySelector('#left-paddle small');
+                const rText = document.querySelector('#right-paddle small');
+                const lIcon = document.querySelector('#left-paddle span');
+                const rIcon = document.querySelector('#right-paddle span');
+                const container = document.getElementById('buttons');
+
+                if (settings.mode === 'straight') {
+                    container.classList.add('straight-mode'); 
+                    lText.textContent = 'KEY / SPACE';
+                    lIcon.textContent = '•';
+                } else {
+                    container.classList.remove('straight-mode');
+                    if (settings.polarity === 'inverse') {
+                        lText.textContent = 'DAH';
+                        rText.textContent = 'DIT';
+                        lIcon.textContent = '-';
+                        rIcon.textContent = '•';
+                    } else {
+                        lText.textContent = 'DIT';
+                        rText.textContent = 'DAH';
+                        lIcon.textContent = '•';
+                        rIcon.textContent = '-';
+                    }
+                }
+            };
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    settings.mode = btn.dataset.mode;
+                    updatePaddleText();
+                    saveData();
+                }
+                if(btn.dataset.mode === settings.mode) btn.classList.add('active');
+            });
+
+            const bindToggle = (id, prop) => {
+                const btn = document.getElementById(id);
+                if(settings[prop]) btn.classList.add('active');
+                btn.onclick = () => {
+                    settings[prop] = !settings[prop];
+                    btn.classList.toggle('active');
+                    saveData();
+                };
+            };
+            
+            const toneBtn = document.getElementById('tone-btn');
+            toneBtn.onclick = () => {
+                settings.toneType = settings.toneType === 'sine' ? 'sawtooth' : 'sine';
+                initAudio();
+                saveData();
+            };
+
+            bindToggle('strict-btn', 'strict');
+            
+            const invBtn = document.getElementById('inverse-btn');
+            if(settings.polarity === 'inverse') invBtn.classList.add('active');
+            invBtn.onclick = () => {
+                settings.polarity = (settings.polarity === 'normal') ? 'inverse' : 'normal';
+                invBtn.classList.toggle('active', settings.polarity === 'inverse');
+                updatePaddleText();
+                saveData();
+            };
+            
+            updatePaddleText();
+
+            document.getElementById('clear-output-btn').onclick = () => document.getElementById('output').textContent = '';
+            document.getElementById('backspace-btn').onclick = () => {
+                const out = document.getElementById('output');
+                out.textContent = out.textContent.slice(0, -1);
+            };
+
+            document.getElementById('minigame-btn').onclick = () => {
+                const overlay = document.getElementById('setup-overlay');
+                const isActive = overlay.style.display === 'flex';
+                if(isActive) {
+                    overlay.style.display = 'none';
+                    document.getElementById('minigame-btn').classList.remove('active-state');
+                } else {
+                    document.getElementById('analytics-overlay').style.display = 'none';
+                    overlay.style.display = 'flex';
+                    document.getElementById('minigame-btn').classList.add('active-state');
+                }
+                if(window.innerWidth <= 1024) drawer.classList.remove('open');
+            };
+
+            document.getElementById('analytics-btn').onclick = () => {
+                const ui = document.getElementById('analytics-overlay');
+                if(ui.style.display === 'flex') {
+                    ui.style.display = 'none';
+                } else {
+                    document.getElementById('setup-overlay').style.display = 'none';
+                    document.getElementById('minigame-btn').classList.remove('active-state');
+                    ui.style.display = 'flex';
+                    renderAnalytics();
+                }
+                if(window.innerWidth <= 1024) drawer.classList.remove('open');
+            };
+            document.getElementById('close-analytics-btn').onclick = () => document.getElementById('analytics-overlay').style.display = 'none';
+            document.getElementById('reset-stats-btn').onclick = () => {
+                if(confirm("Reset statistics?")) {
+                    userStats = { wpmHistory: [], qcodeHistory: [], missedLetters: {}, slowLetters: {}, learnIndex: 0, totalPlayTime: 0 };
+                    saveStats();
+                    renderAnalytics();
+                }
+            };
+            document.getElementById('donate-btn').onclick = () => window.open('https://ko-fi.com/vladyakimov', '_blank'); 
+            
+            document.getElementById('replay-result-btn').onclick = () => {
+                startMinigame();
+            };
+
+            const optWords = document.getElementById('opt-words');
+            const optQcodes = document.getElementById('opt-qcodes');
+            const optRandom = document.getElementById('opt-random');
+            const optLearn = document.getElementById('opt-learn');
+            const modeSend = document.getElementById('mode-send');
+            const modeRecv = document.getElementById('mode-recv');
+            
+            const hintsToggleGroup = document.getElementById('hints-toggle-group');
+            const hintOff = document.getElementById('hints-off');
+            const hintOn = document.getElementById('hints-on');
+            
+            const charTypeGroup = document.getElementById('char-type-selector');
+            const farnsworthGroup = document.getElementById('farnsworth-toggle-group');
+            const farnsworthOff = document.getElementById('farnsworth-off');
+            const farnsworthOn = document.getElementById('farnsworth-on');
+            
+            const descEl = document.getElementById('game-desc');
+            const itemSelector = document.querySelector('.item-selector');
+            
+            const updateDesc = () => {
+                 if(setupMode === 'random' || setupMode === 'learn') charTypeGroup.style.display = 'flex';
+                 else charTypeGroup.style.display = 'none';
+
+                 if(setupMode === 'learn') {
+                     descEl.textContent = DESCRIPTIONS.learn;
+                     itemSelector.style.display = 'none';
+                     return;
+                 }
+                 itemSelector.style.display = 'flex';
+                 if(setupType === 'send') descEl.textContent = DESCRIPTIONS[setupMode];
+                 else descEl.textContent = RX_DESCRIPTIONS[setupMode];
+            };
+            
+            modeSend.onclick = () => {
+                setupType = 'send';
+                modeSend.classList.add('selected');
+                modeRecv.classList.remove('selected');
+                hintsToggleGroup.style.opacity = '1';
+                hintsToggleGroup.style.pointerEvents = 'all';
+                optLearn.style.display = 'block';
+                farnsworthGroup.classList.add('disabled');
+                farnsworthGroup.style.opacity = '0.5';
+                farnsworthGroup.style.pointerEvents = 'none';
+                settings.farnsworth = false; 
+                farnsworthOff.classList.add('selected'); 
+                farnsworthOn.classList.remove('selected'); 
+                saveData(); 
+                updateDesc();
+            };
+            modeRecv.onclick = () => {
+                setupType = 'recv';
+                modeRecv.classList.add('selected');
+                modeSend.classList.remove('selected');
+                hintsToggleGroup.style.opacity = '0.5';
+                hintsToggleGroup.style.pointerEvents = 'none';
+                optLearn.style.display = 'none';
+                if(setupMode === 'learn') optWords.click();
+                farnsworthGroup.classList.remove('disabled');
+                farnsworthGroup.style.opacity = '1';
+                farnsworthGroup.style.pointerEvents = 'all';
+                updateDesc();
+            };
+            
+            const setMode = (mode, el) => {
+                setupMode = mode;
+                [optWords, optQcodes, optRandom, optLearn].forEach(b => b.classList.remove('selected'));
+                el.classList.add('selected');
+                updateDesc();
+            };
+
+            optWords.onclick = () => setMode('words', optWords);
+            optQcodes.onclick = () => setMode('qcodes', optQcodes);
+            optRandom.onclick = () => setMode('random', optRandom);
+            optLearn.onclick = () => {
+                setMode('learn', optLearn);
+                modeSend.click(); 
+            };
+
+            hintOff.onclick = () => { setupHints = false; hintOff.classList.add('selected'); hintOn.classList.remove('selected'); };
+            hintOn.onclick = () => { setupHints = true; hintOn.classList.add('selected'); hintOff.classList.remove('selected'); };
+            
+            farnsworthOff.onclick = () => { settings.farnsworth = false; farnsworthOff.classList.add('selected'); farnsworthOn.classList.remove('selected'); saveData(); };
+            farnsworthOn.onclick = () => { settings.farnsworth = true; farnsworthOn.classList.add('selected'); farnsworthOff.classList.remove('selected'); saveData(); };
+            
+            document.querySelectorAll('.multi-select').forEach(btn => {
+                const type = btn.dataset.type;
+                if(settings.charTypes[type]) btn.classList.add('selected');
+                btn.onclick = () => {
+                    const newState = !settings.charTypes[type];
+                    const activeCount = Object.values(settings.charTypes).filter(Boolean).length;
+                    if(!newState && activeCount <= 1) return; 
+                    settings.charTypes[type] = newState;
+                    if(newState) btn.classList.add('selected'); else btn.classList.remove('selected');
+                    saveData();
+                };
+            });
+            
+            if(settings.farnsworth) {
+                farnsworthOn.classList.add('selected');
+                farnsworthOff.classList.remove('selected');
+            }
+            if (setupType === 'send') {
+                 farnsworthGroup.classList.add('disabled');
+                 farnsworthGroup.style.opacity = '0.5';
+                 farnsworthGroup.style.pointerEvents = 'none';
+            }
+
+            document.getElementById('words-count-display').textContent = gameState.targetCount;
+            document.getElementById('words-plus').onclick = () => { 
+                gameState.targetCount = Math.min(50, gameState.targetCount+5); 
+                document.getElementById('words-count-display').textContent = gameState.targetCount; 
+            };
+            document.getElementById('words-minus').onclick = () => { 
+                gameState.targetCount = Math.max(5, gameState.targetCount-5); 
+                document.getElementById('words-count-display').textContent = gameState.targetCount; 
+            };
+
+            updateDesc();
+
+            document.getElementById('start-game-btn').onclick = startMinigame;
+            document.getElementById('cancel-game-btn').onclick = () => {
+                document.getElementById('setup-overlay').style.display = 'none';
+                document.getElementById('minigame-btn').classList.remove('active-state');
+            };
+            document.getElementById('quit-game-btn').onclick = () => {
+                gameState.active = false;
+                stopAudioPlayback();
+                document.getElementById('game-active').style.display = 'none';
+                document.getElementById('output').style.display = 'flex';
+                document.getElementById('minigame-btn').classList.remove('active-state');
+                document.getElementById('buttons').style.display = 'flex';
+                document.getElementById('virtual-keyboard').style.display = 'none';
+            };
+            
+            document.getElementById('replay-btn').onclick = () => {
+                 if (gameState.active && gameState.trainingType === 'recv') {
+                     stopAudioPlayback();
+                     playMorseWord(gameState.items[gameState.currentItemIndex].target);
+                 }
+            };
+            
+            const tableContainer = document.getElementById('table-container');
+            const grid = document.getElementById('morse-grid');
+            Object.keys(MORSE_TABLE).forEach(k => {
+                const div = document.createElement('div');
+                div.className = 'sheet-item';
+                div.innerHTML = `<div style="font-weight:800;font-size:1.2rem;color:var(--text-main);">${k}</div><div style="color:var(--primary);font-family:'JetBrains Mono';">${MORSE_TABLE[k]}</div>`;
+                div.onclick = () => {
+                    const audio = new (window.AudioContext || window.webkitAudioContext)();
+                    const o = audio.createOscillator();
+                    const g = audio.createGain();
+                    o.connect(g); g.connect(audio.destination);
+                    o.frequency.value = settings.tone;
+                    const dot = 0.08;
+                    let now = audio.currentTime;
+                    MORSE_TABLE[k].split('').forEach(s => {
+                        const dur = s === '.' ? dot : dot*3;
+                        g.gain.setValueAtTime(0.5, now);
+                        g.gain.setValueAtTime(0, now + dur);
+                        now += dur + dot;
+                    });
+                    o.start(); o.stop(now);
+                };
+                grid.appendChild(div);
+            });
+            document.getElementById('table-btn').onclick = () => tableContainer.classList.add('visible');
+            document.getElementById('close-table-btn').onclick = () => tableContainer.classList.remove('visible');
+
+            document.getElementById('init-btn').onclick = () => {
+                document.getElementById('start-overlay').style.display = 'none';
+                initAudio();
+            };
+            window.closeResults = () => {
+                document.getElementById('game-results-overlay').style.display = 'none';
+                document.getElementById('game-active').style.display = 'none'; 
+                document.getElementById('output').style.display = 'flex';
+                document.getElementById('minigame-btn').classList.remove('active-state');
+                document.getElementById('buttons').style.display = 'flex';
+                document.getElementById('virtual-keyboard').style.display = 'none';
+            };
+            
+            lucide.createIcons();
+        }
+
+        // --- NEW ANALYTICS LOGIC ---
+        function renderAnalytics() {
+            lucide.createIcons();
+            
+            // 1. Calculate Metrics
+            const wpmVals = userStats.wpmHistory.filter(v => v > 0);
+            const bestWpm = wpmVals.length ? Math.max(...wpmVals) : 0;
+            document.getElementById('stat-best-wpm').textContent = bestWpm;
+            
+            // Time
+            const t = userStats.totalPlayTime || 0;
+            const hrs = Math.floor(t / 3600000);
+            const mins = Math.floor((t % 3600000) / 60000);
+            document.getElementById('stat-total-time').textContent = `${hrs}h ${mins}m`;
+
+            // 2. Render Heatmap (QWERTY layout)
+            const rows = [
+                "QWERTYUIOP",
+                "ASDFGHJKL",
+                "ZXCVBNM"
+            ];
+            const heatmapGrid = document.getElementById('heatmap-grid');
+            heatmapGrid.innerHTML = '';
+            
+            // Find max error count for scaling color
+            const maxErrors = Math.max(...Object.values(userStats.missedLetters), 5);
+            
+            rows.forEach(rowStr => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'hm-row';
+                rowStr.split('').forEach(char => {
+                    const keyDiv = document.createElement('div');
+                    keyDiv.className = 'hm-key';
+                    keyDiv.textContent = char;
+                    
+                    const errs = userStats.missedLetters[char] || 0;
+                    if(errs > 0) {
+                        keyDiv.setAttribute('data-errors', errs);
+                        keyDiv.classList.add('has-error');
+                        // Scale red opacity
+                        const intensity = Math.min(1, Math.max(0.2, errs / maxErrors));
+                        keyDiv.style.backgroundColor = `rgba(239, 68, 68, ${intensity})`;
+                    } else {
+                        keyDiv.style.opacity = "0.5";
+                    }
+                    rowDiv.appendChild(keyDiv);
+                });
+                heatmapGrid.appendChild(rowDiv);
+            });
+
+            // 3. Render Chart with Resize safety
+            requestAnimationFrame(() => {
+                const canvas = document.getElementById('wpm-chart');
+                const wrapper = canvas.parentElement;
+                
+                // Set logic canvas size equal to display size
+                const rect = wrapper.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+
+                renderChart('wpm-chart', userStats.wpmHistory, '#3b82f6', 'no-data-msg');
+            });
+        }
+
+        function renderChart(canvasId, data, color, emptyId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            if(!data || data.length < 2) {
+                document.getElementById(emptyId).style.display = 'flex';
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                return;
+            }
+            document.getElementById(emptyId).style.display = 'none';
+            
+            const padding = 24;
+            const w = canvas.width - padding*2;
+            const h = canvas.height - padding*2;
+            const max = Math.max(...data, 20);
+            
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            
+            // Gradient fill
+            const grad = ctx.createLinearGradient(0, padding, 0, canvas.height - padding);
+            grad.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+            grad.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+            
+            // Path
+            ctx.beginPath();
+            data.forEach((val, i) => {
+                const x = padding + (i / (Math.max(1, data.length-1))) * w;
+                const y = (canvas.height - padding) - (val / max) * h;
+                if(i===0) ctx.moveTo(x,y);
+                else ctx.lineTo(x,y);
+            });
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            
+            // Fill
+            ctx.lineTo(padding + w, canvas.height - padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.fillStyle = grad;
+            ctx.fill();
+            
+            // Dots
+            ctx.fillStyle = '#fff';
+            data.forEach((val, i) => {
+                const x = padding + (i / (Math.max(1, data.length-1))) * w;
+                const y = (canvas.height - padding) - (val / max) * h;
+                ctx.beginPath();
+                ctx.arc(x,y, 4, 0, Math.PI*2);
+                ctx.fill();
+            });
+        }
+
+        let inputsAttached = false;
+        
+        function setupInputs() {
+            if (inputsAttached) return; // Prevent double attachment
+            inputsAttached = true;
+
+            const left = document.getElementById('left-paddle');
+            const right = document.getElementById('right-paddle');
+
+            const handleTouch = (e, side, active) => {
+                if (e.type !== 'touchcancel') e.preventDefault();
+                handlePaddle(side, active);
+            };
+
+            left.ontouchstart = (e) => handleTouch(e, 'left', true);
+            right.ontouchstart = (e) => handleTouch(e, 'right', true);
+            left.ontouchend = (e) => handleTouch(e, 'left', false);
+            right.ontouchend = (e) => handleTouch(e, 'right', false);
+            left.ontouchcancel = (e) => handleTouch(e, 'left', false);
+            right.ontouchcancel = (e) => handleTouch(e, 'right', false);
+
+            left.onmousedown = (e) => { e.preventDefault(); handlePaddle('left', true); };
+            right.onmousedown = (e) => { e.preventDefault(); handlePaddle('right', true); };
+            window.addEventListener('mouseup', () => {
+                handlePaddle('left', false);
+                handlePaddle('right', false);
+            });
+
+            window.addEventListener('blur', () => {
+                handlePaddle('left', false);
+                handlePaddle('right', false);
+                stopTone();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if(e.repeat) return;
+                
+                if (gameState.active && gameState.trainingType === 'recv') {
+                    if (e.key.length === 1) handleKeyboardRx(e.key);
+                }
+
+                if (settings.mode === 'straight') {
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        handlePaddle('left', true);
+                    }
+                    return; 
+                }
+
+                if(e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') handlePaddle('left', true);
+                if(e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') handlePaddle('right', true);
+            });
+
+            document.addEventListener('keyup', (e) => {
+                if (settings.mode === 'straight') {
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        handlePaddle('left', false);
+                    }
+                    return;
+                }
+
+                if(e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') handlePaddle('left', false);
+                if(e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') handlePaddle('right', false);
+            });
+            
+            document.oncontextmenu = (e) => e.preventDefault();
+            
+            document.querySelectorAll('.kb-key').forEach(keyBtn => {
+                keyBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if(gameState.active && gameState.trainingType === 'recv') {
+                         handleMinigameInput(keyBtn.getAttribute('data-key'));
+                    }
+                });
+            });
+        }
+
+        loadData();
+        initUI();
+        setupInputs();
+        
+    </script>
+</body>
+</html>
