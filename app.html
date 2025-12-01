@@ -322,14 +322,53 @@
         .paddle:active span, .paddle.pressed span { color: var(--primary); opacity: 1; }
         .paddle:active small, .paddle.pressed small { color: var(--primary); opacity: 1; }
 
-        /* --- Overlays --- */
-        #start-overlay, #game-results-overlay, #setup-overlay, #analytics-overlay { 
+        /* --- Overlays & Transitions --- */
+        /* 
+           Instead of display:none, we use visibility and opacity for smooth transitions.
+           The overlay container provides the backdrop.
+        */
+        .overlay-container { 
             position: fixed; inset: 0; 
             background: rgba(9, 9, 11, 0.95);
             backdrop-filter: blur(8px);
             z-index: 300; 
-            display: flex; align-items: center; justify-content: center; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
             padding: 20px; 
+            
+            /* Transition Props */
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        
+        .overlay-container.open {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        /* Desktop Card Transition: Scale in */
+        .overlay-container .glass-card,
+        .overlay-container .setup-card,
+        .overlay-container .stats-dashboard {
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: scale(0.95);
+        }
+        
+        .overlay-container.open .glass-card,
+        .overlay-container.open .setup-card,
+        .overlay-container.open .stats-dashboard {
+            transform: scale(1);
+        }
+        
+        /* Special Case: Welcome Screen always needs to be visible initially if JS hasn't loaded, but we handle init via JS */
+        #start-overlay {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
         }
         
         #analytics-overlay {
@@ -492,6 +531,7 @@
             flex: 1; 
             transition: all 0.2s; 
             font-weight: 600;
+            cursor: pointer;
         }
         .toggle-opt.selected { 
             background: var(--bg-active); 
@@ -529,55 +569,316 @@
         
         /* Hidden by default on desktop */
         .drawer-header { display: none; }
+        
+        /* Bottom Nav (Mobile) */
+        .mobile-bottom-nav { display: none; }
 
         @media (max-width: 1024px) {
-            .mobile-menu-btn { display: flex; }
-            .control-deck {
-                position: fixed; inset: 0; z-index: 200;
-                background: var(--bg-app);
-                flex-direction: column; padding: 16px; gap: 12px;
-                transform: translateY(100%); transition: transform 0.2s ease-in-out;
-                justify-content: flex-start;
-                padding-top: max(20px, env(safe-area-inset-top));
-                padding-bottom: max(20px, env(safe-area-inset-bottom));
+            /* =========================================
+            1. Core Layout & Hiding Desktop Elements
+            ========================================= */
+            .mobile-menu-btn { display: none; }
+            .header-actions { display: none; } 
+
+            .app-shell {
+                padding-bottom: calc(80px + env(safe-area-inset-bottom));
             }
-            .control-deck.open { transform: translateY(0); }
+
+            /* =========================================
+            2. Bottom Navigation
+            ========================================= */
+            .mobile-bottom-nav {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 65px;
+                background: rgba(9, 9, 11, 0.95);
+                backdrop-filter: blur(12px);
+                border-top: 1px solid var(--border);
+                z-index: 500;
+                padding-bottom: env(safe-area-inset-bottom);
+                justify-content: space-around;
+                align-items: center;
+            }
             
+            .nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                color: var(--text-muted);
+                font-size: 0.65rem;
+                background: none;
+                border: none;
+                width: 60px;
+                height: 100%;
+                cursor: pointer;
+                transition: color 0.2s ease;
+                font-weight: 500;
+            }
+            
+            .nav-item:active { color: var(--text-main); }
+            .nav-item.active { color: var(--primary); text-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+            .nav-item.active span { color: var(--primary); font-weight: 700; }
+            
+            .nav-center-btn {
+                width: 56px; height: 56px; border-radius: 50%;
+                background: var(--primary); color: white;
+                display: flex; align-items: center; justify-content: center;
+                box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+                margin-top: -28px; border: 4px solid var(--bg-app);
+                transition: transform 0.2s ease, background 0.2s;
+            }
+            .nav-center-btn:active { transform: scale(0.95); background: var(--primary-dark); }
+            .nav-center-btn.active {
+                background: var(--text-main); color: var(--bg-app);
+                border-color: var(--primary); transform: translateY(-5px) scale(1.05);
+                box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
+            }
+
+            /* =========================================
+            3. Optimized Mobile Layout
+            ========================================= */
+            .monitor-stage { flex: 1; min-height: 0; height: auto; }
+            .paddle-container { height: 160px; flex-shrink: 0; }
+            .pop-btn span, .btn span { display: none; }
+            .pop-btn, .btn { padding: 0 12px; }
+
+            /* Stats Mobile Optimizations */
+            .metric-row { grid-template-columns: 1fr; gap: 12px; }
+            .metric-card { flex-direction: row; justify-content: space-between; padding: 20px; }
+            .hm-key { width: 8vw; height: 10vw; max-width: 30px; max-height: 40px; font-size: 0.8rem; }
+
+            /* =========================================
+            4. Unified Drawer Containers 
+            ========================================= */
+            .control-deck, 
+            .overlay-container .stats-dashboard, 
+            #table-container,
+            .overlay-container .setup-card,
+            #game-results-overlay .glass-card {
+                position: fixed !important;
+                inset: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                
+                background: var(--bg-panel) !important;
+                border-radius: 24px 24px 0 0 !important;
+                border: 1px solid var(--border) !important;
+                border-bottom: none !important;
+                box-shadow: 0 -10px 40px rgba(0,0,0,0.5) !important;
+                
+                padding: 24px 20px !important;
+                padding-top: max(24px, env(safe-area-inset-top)) !important;
+                padding-bottom: 0 !important;
+                
+                /* Base State: Hidden (Slid Down) */
+                transform: translateY(100%) !important; 
+                transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                
+                height: 100dvh !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                overflow-y: auto !important;
+                
+                /* Force GPU Layer to prevent children from detaching during paint */
+                will-change: transform;
+            }
+
+            /* Open States */
+            .control-deck.open,
+            .overlay-container.open .stats-dashboard,
+            .overlay-container.open .setup-card,
+            #game-results-overlay.open .glass-card,
+            #table-container.visible {
+                transform: translateY(0) !important;
+            }
+            
+            /* Scroll Spacer */
+            .control-deck::after, 
+            .stats-dashboard::after, 
+            #table-container::after,
+            .setup-card::after,
+            #game-results-overlay .glass-card::after {
+                content: ''; display: block; width: 100%;
+                min-height: calc(100px + env(safe-area-inset-bottom)); flex-shrink: 0;
+            }
+
+            /* Z-Index Hierarchy */
+            .control-deck { z-index: 200 !important; }
+            .overlay-container .stats-dashboard { z-index: 300 !important; }
+            .overlay-container .setup-card { z-index: 350 !important; }
+            #game-results-overlay .glass-card { z-index: 360 !important; }
+            #table-container { z-index: 400 !important; }
+
+            /* Internal Grid for Controls */
             .control-group { 
-                width: 100%; 
-                display: grid; 
-                grid-template-columns: 1fr 1fr; 
-                gap: 12px; 
-                background: var(--bg-panel);
+                width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; 
+                background: var(--bg-panel); flex-shrink: 0;
             }
             .group-label { grid-column: 1 / -1; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 4px; }
             .range-wrapper { grid-column: 1 / -1; }
+
+            /* =========================================
+            5. FIX: Overlay Wrapper Animation Logic
+            ========================================= */
+            #game-results-overlay,
+            #setup-overlay,
+            #analytics-overlay {
+                align-items: flex-end; padding: 0;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.35s ease, visibility 0s linear 0.35s !important;
+            }
             
-            .drawer-header { 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center; 
-                width: 100%; 
-                padding-bottom: 16px; 
-                border-bottom: 1px solid var(--border);
-                margin-bottom: 8px;
+            #game-results-overlay.open,
+            #setup-overlay.open,
+            #analytics-overlay.open {
+                opacity: 1 !important;
+                visibility: visible !important;
+                transition: opacity 0.35s ease, visibility 0s linear 0s !important;
             }
-            .drawer-title { font-weight: 700; font-size: 1.25rem; }
-            .drawer-close { 
-                background: var(--bg-element); 
-                border: none; 
-                color: var(--text-main); 
-                width: 36px; height: 36px; 
-                border-radius: 50%; 
-                display: flex; align-items: center; justify-content: center;
+
+            /* =========================================
+            6. Headers & Icons
+            ========================================= */
+            .drawer-header,
+            .stats-header,
+            #table-container > div:first-child {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                margin-bottom: 24px !important;
+                padding-bottom: 16px !important;
+                border-bottom: 1px solid var(--border) !important;
+                width: 100% !important;
+                min-height: 40px !important;
+                flex-shrink: 0;
             }
+
+            .drawer-title,
+            .stats-header .brand,
+            #table-container h2 {
+                font-family: 'Inter', sans-serif !important;
+                font-size: 1.5rem !important;
+                font-weight: 700 !important;
+                color: var(--text-main) !important;
+                letter-spacing: -0.02em !important;
+                margin: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 12px !important;
+            }
+
+            .stats-header .brand i { display: block !important; color: var(--primary) !important; width: 24px !important; height: 24px !important; }
+            .stats-header .brand span { font-size: 1.5rem !important; font-weight: 700 !important; color: var(--text-main) !important; }
+
+            /* Injected Icons */
+            .drawer-title::before { /* Controls */
+                content: ''; display: block; width: 24px; height: 24px; background-color: var(--primary);
+                -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='21' y1='4' x2='14' y2='4'%3E%3C/line%3E%3Cline x1='10' y1='4' x2='3' y2='4'%3E%3C/line%3E%3Cline x1='21' y1='12' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='8' y1='12' x2='3' y2='12'%3E%3C/line%3E%3Cline x1='21' y1='20' x2='16' y2='20'%3E%3C/line%3E%3Cline x1='12' y1='20' x2='3' y2='20'%3E%3C/line%3E%3Cline x1='14' y1='2' x2='14' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='10' x2='8' y2='14'%3E%3C/line%3E%3Cline x1='16' y1='18' x2='16' y2='22'%3E%3C/line%3E%3C/svg%3E") no-repeat center;
+                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='21' y1='4' x2='14' y2='4'%3E%3C/line%3E%3Cline x1='10' y1='4' x2='3' y2='4'%3E%3C/line%3E%3Cline x1='21' y1='12' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='8' y1='12' x2='3' y2='12'%3E%3C/line%3E%3Cline x1='21' y1='20' x2='16' y2='20'%3E%3C/line%3E%3Cline x1='12' y1='20' x2='3' y2='20'%3E%3C/line%3E%3Cline x1='14' y1='2' x2='14' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='10' x2='8' y2='14'%3E%3C/line%3E%3Cline x1='16' y1='18' x2='16' y2='22'%3E%3C/line%3E%3C/svg%3E") no-repeat center;
+            }
+            #table-container h2::before { /* Ref */
+                content: ''; display: block; width: 24px; height: 24px; background-color: var(--primary);
+                -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18'/%3E%3C/svg%3E") no-repeat center;
+                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18'/%3E%3C/svg%3E") no-repeat center;
+            }
+
+            /* =========================================
+            7. Close Buttons (Alignment & Animation Fix)
+            ========================================= */
+            .drawer-close, #close-analytics-btn, #close-table-btn {
+                width: 40px !important; height: 40px !important; border-radius: 50% !important;
+                background: var(--bg-element) !important; border: 1px solid var(--border) !important;
+                color: var(--text-muted) !important;
+                display: flex !important; align-items: center !important; justify-content: center !important;
+                padding: 0 !important; font-size: 0 !important; 
+                position: relative !important;
+                
+                /* FIX: Disable transitions by default to prevent "lagging behind" during drawer slide.
+                Only animate opacity/bg on hover/active if needed, but keep position rigid. */
+                transition: none !important;
+            }
+            
+            .drawer-close i, #close-analytics-btn i { display: block !important; width: 24px !important; height: 24px !important; color: var(--text-muted) !important; }
+            #close-analytics-btn span { display: none !important; }
+            #close-analytics-btn::after, .drawer-close::after { content: none !important; display: none !important; }
+            
+            /* FIX: Use Background Image for Ref Close Button */
+            #close-table-btn {
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E") !important;
+                background-repeat: no-repeat !important;
+                background-position: center !important;
+                background-size: 24px 24px !important;
+                color: transparent !important; /* Hide any text */
+            }
+            #close-table-btn::after { display: none !important; } 
+
+            .drawer-close:active, #close-analytics-btn:active, #close-table-btn:active {
+                background-color: var(--bg-active) !important; transform: scale(0.95);
+                /* Re-enable slight transition only for the click effect, not for movement */
+                transition: transform 0.1s ease !important;
+            }
+
+            /* =========================================
+            8. Start Screen (Welcome Card) Fix
+            ========================================= */
+            #start-overlay { 
+                align-items: center !important; 
+                justify-content: center !important;
+                padding: 16px !important; 
+                padding-top: 0 !important; 
+                z-index: 999 !important;
+            }
+            
+            #start-overlay .glass-card {
+                position: static !important;
+                transform: scale(0.95) !important; 
+                width: 100% !important; max-width: 420px !important; 
+                height: auto !important; 
+                border-radius: 16px !important;
+                border: 1px solid var(--border) !important; 
+                border-bottom: 1px solid var(--border) !important; 
+                padding: 32px 24px !important;
+                box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5) !important;
+                margin: 0 auto !important;
+                inset: auto !important;
+                transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+            
+            #start-overlay.open .glass-card { transform: scale(1) !important; }
+            
+            /* Remove the spacer from the welcome card */
+            #start-overlay .glass-card::after { display: none !important; }
+            
+            /* CRITICAL FIX: Kill ANY AND ALL transitions on Ref Table children to prevent detached floating */
+            #table-container * { 
+                transition: none !important; 
+                transform: none !important; 
+            }
+
+            /* Ref Table Specifics reset */
+            #table-container .sheet-grid { padding-bottom: 0 !important; }
+            #table-container.visible {
+                display: flex; visibility: visible; pointer-events: auto;
+                transform: translateY(0) !important; opacity: 1;
+                transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0s;
+            }
+            #table-container { visibility: hidden; opacity: 1; pointer-events: none; }
         }
 
         @media (max-width: 768px) {
             .app-shell { 
                 padding: 12px; 
                 gap: 12px; 
-                padding-top: max(16px, env(safe-area-inset-top)); 
+                padding-top: max(16px, env(safe-area-inset-top));
+                padding-bottom: calc(80px + env(safe-area-inset-bottom));
             }
             
             /* Optimized Mobile Layout */
@@ -594,27 +895,124 @@
             
             .pop-btn span, .btn span { display: none; }
             .pop-btn, .btn { padding: 0 12px; }
-            .brand-text { display: none; } 
             
             /* Stats Mobile Optimizations */
-            .stats-dashboard { margin: 0; padding: 16px; padding-top: 60px; max-width: 100%; }
+            .stats-dashboard { margin: 0; max-width: 100%; }
             .metric-row { grid-template-columns: 1fr; gap: 12px; }
             .metric-card { flex-direction: row; justify-content: space-between; padding: 20px; }
             .hm-key { width: 8vw; height: 10vw; max-width: 30px; max-height: 40px; font-size: 0.8rem; }
         }
         
-        /* Cheat Sheet */
-        .cheat-sheet { display: none; position: fixed; inset: 20px; background: var(--bg-app); border: 1px solid var(--border); z-index: 400; border-radius: 12px; padding: 24px; overflow-y: auto; }
-        .cheat-sheet.visible { display: block; }
+        /* Cheat Sheet - Desktop Base */
+        .cheat-sheet { 
+            /* Hidden by default via css class toggle */
+            position: fixed; inset: 20px; background: var(--bg-app); border: 1px solid var(--border); z-index: 400; border-radius: 12px; padding: 24px; overflow-y: auto; 
+            visibility: hidden; opacity: 0; pointer-events: none; 
+            transition: opacity 0.2s;
+        }
+            #table-container {
+                position: fixed;
+                inset: 0 !important; 
+                z-index: 400;
+                
+                padding-top: max(32px, env(safe-area-inset-top));
+                padding-bottom: 0; 
+                
+                overflow-y: auto;
+
+                visibility: hidden;
+                opacity: 1; 
+                pointer-events: none;
+                
+                /* Slide down (start state) */
+                transform: translateY(100%);
+                
+                /* Transition transform. Delay visibility so it hides AFTER sliding down */
+                transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0.3s;
+                
+                display: flex;
+                flex-direction: column;
+                background: var(--bg-panel);
+            }
+
+            /* Apply padding to inner grid */
+            #table-container .sheet-grid {
+                padding-bottom: calc(120px + env(safe-area-inset-bottom));
+            }
+            
+            /* Reset Inner content animation */
+            #table-container > * {
+                transform: none;
+                transition: none;
+            }
+            
+            #table-container.visible {
+                display: flex; 
+                visibility: visible;
+                pointer-events: auto;
+                
+                /* Slide up */
+                transform: translateY(0);
+                opacity: 1;
+                
+                /* Show immediately when opening */
+                transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0s;
+            }
+        .cheat-sheet.visible { visibility: visible; opacity: 1; pointer-events: auto; display: block; }
         .sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
         .sheet-item { background: var(--bg-element); padding: 10px; border-radius: 6px; text-align: center; border: 1px solid transparent; }
         .sheet-item:hover { border-color: var(--primary); background: var(--bg-active); }
         
-        /* Keyboard */
-        .keyboard-container { display: none; background: var(--bg-panel); border-top: 1px solid var(--border); height: 200px; width: 100%; padding: 10px; flex-direction: column; justify-content: center; gap: 6px; border-radius: var(--radius-lg); }
-        .kb-row { display: flex; gap: 4px; justify-content: center; width: 100%; }
-        .kb-key { flex: 1; max-width: 40px; height: 44px; background: var(--bg-element); border: 1px solid var(--border); color: white; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        /* Keyboard - REFACTORED */
+        .keyboard-container { 
+            display: none; 
+            background: var(--bg-panel); 
+            border-top: 1px solid var(--border); 
+            height: auto; /* Allow auto growth */
+            min-height: 220px; 
+            width: 100%; 
+            padding: 12px; 
+            flex-direction: column; 
+            justify-content: center; 
+            gap: 8px; 
+            border-radius: var(--radius-lg); 
+        }
+        
+        .kb-layer {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            height: 100%;
+            flex: 1;
+        }
+
+        .kb-row { display: flex; gap: 6px; justify-content: center; width: 100%; flex: 1; }
+        
+        .kb-key { 
+            flex: 1; 
+            height: 100%; 
+            min-height: 48px; 
+            background: var(--bg-element); 
+            border: 1px solid var(--border); 
+            color: white; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            font-size: 1.1rem; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
         .kb-key:active { background: var(--primary); border-color: var(--primary); }
+        
+        .kb-key.kb-special {
+            background: var(--bg-active);
+            font-size: 0.9rem;
+            flex-grow: 1.5;
+        }
 
         /* Learn Mode Specifics */
         .big-letter { font-size: clamp(4rem, 25vh, 10rem); font-weight: 800; color: white; position: relative; margin-bottom: 20px; }
@@ -629,11 +1027,15 @@
         .v-symbol.dot { width: 12px; }
         .v-symbol.dash { width: 36px; }
         .mnemonic-text { font-size: 1.2rem; color: var(--primary); font-weight: 700; margin-bottom: 8px; }
+        body.needs-extra-padding .app-shell {
+            padding-bottom: 110px !important; /* 80px base + 30px extra buffer */
+        }
     </style>
 </head>
 <body>
 
-    <div id="start-overlay">
+    <!-- Use overlay-container class for visibility logic -->
+    <div id="start-overlay" class="overlay-container">
         <div class="glass-card">
             <div class="brand" style="justify-content: center; margin-bottom: 20px;">
                 <div class="brand-dot"></div>
@@ -652,7 +1054,7 @@
     </div>
 
     <!-- Game Setup Overlay -->
-    <div id="setup-overlay" style="display: none;">
+    <div id="setup-overlay" class="overlay-container">
         <div class="setup-card">
             <h2 style="font-size:1.5rem; font-weight: 700; margin-bottom:8px;">Tactical Training</h2>
             <p style="color:var(--text-muted); margin-bottom: 24px; font-size: 0.9rem;">Configure session parameters.</p>
@@ -720,7 +1122,7 @@
     </div>
     
     <!-- REIMAGINED Analytics Overlay -->
-    <div id="analytics-overlay" style="display: none;">
+    <div id="analytics-overlay" class="overlay-container">
         <div class="stats-dashboard">
             <div class="stats-header">
                 <div class="brand">
@@ -732,6 +1134,12 @@
                     <span>Close</span>
                 </button>
             </div>
+            
+            <!-- TX / RX Toggle -->
+            <div class="toggle-group" style="width: 100%;">
+                <div class="toggle-opt selected" id="stat-mode-tx">TX Stats</div>
+                <div class="toggle-opt" id="stat-mode-rx">RX Stats</div>
+            </div>
 
             <!-- Top Level Metrics -->
             <div class="metric-row">
@@ -740,7 +1148,7 @@
                     <div class="metric-val" id="stat-best-wpm">0</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Accuracy</div>
+                    <div class="metric-label">Global Accuracy</div>
                     <div class="metric-val" id="stat-accuracy" style="color: #10b981;">100%</div>
                 </div>
                 <div class="metric-card">
@@ -752,7 +1160,7 @@
             <!-- Heatmap -->
             <div class="heatmap-container">
                 <div style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <h3 style="font-size:0.9rem; font-weight:700; color:var(--text-muted);">Error Heatmap</h3>
+                    <h3 style="font-size:0.9rem; font-weight:700; color:var(--text-muted);" id="heatmap-title">TX Error Heatmap</h3>
                     <div style="font-size:0.7rem; color:var(--text-muted);">Redder = More Errors</div>
                 </div>
                 <div id="heatmap-grid" style="display:flex; flex-direction:column; gap:6px; width:100%; align-items:center;">
@@ -775,7 +1183,7 @@
         </div>
     </div>
 
-    <div id="game-results-overlay" style="display: none;">
+    <div id="game-results-overlay" class="overlay-container">
         <div class="glass-card">
             <div class="hero-title">Complete</div>
             <div class="hero-subtitle">Session Report</div>
@@ -790,8 +1198,8 @@
                     <div id="result-mistakes" style="font-size:1.8rem; font-weight:800; color:var(--danger);">0</div>
                 </div>
                 <div style="background:var(--bg-active); padding:16px; border-radius:8px;">
-                    <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); font-weight: 700;">Time</div>
-                    <div id="result-time" style="font-size:1.4rem; font-weight:700; color:var(--text-main); margin-top: 4px;">00:00</div>
+                    <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); font-weight: 700;">Accuracy</div>
+                    <div id="result-accuracy" style="font-size:1.4rem; font-weight:700; color:var(--text-main); margin-top: 4px;">100%</div>
                 </div>
             </div>
             
@@ -923,41 +1331,109 @@
         </div>
 
         <div class="keyboard-container" id="virtual-keyboard">
-            <div class="kb-row">
-                <button class="kb-key" data-key="Q">Q</button>
-                <button class="kb-key" data-key="W">W</button>
-                <button class="kb-key" data-key="E">E</button>
-                <button class="kb-key" data-key="R">R</button>
-                <button class="kb-key" data-key="T">T</button>
-                <button class="kb-key" data-key="Y">Y</button>
-                <button class="kb-key" data-key="U">U</button>
-                <button class="kb-key" data-key="I">I</button>
-                <button class="kb-key" data-key="O">O</button>
-                <button class="kb-key" data-key="P">P</button>
+            <!-- Alpha Layer -->
+            <div class="kb-layer" id="kb-layer-alpha">
+                <div class="kb-row">
+                    <button class="kb-key" data-key="Q">Q</button>
+                    <button class="kb-key" data-key="W">W</button>
+                    <button class="kb-key" data-key="E">E</button>
+                    <button class="kb-key" data-key="R">R</button>
+                    <button class="kb-key" data-key="T">T</button>
+                    <button class="kb-key" data-key="Y">Y</button>
+                    <button class="kb-key" data-key="U">U</button>
+                    <button class="kb-key" data-key="I">I</button>
+                    <button class="kb-key" data-key="O">O</button>
+                    <button class="kb-key" data-key="P">P</button>
+                </div>
+                <div class="kb-row">
+                    <button class="kb-key" data-key="A">A</button>
+                    <button class="kb-key" data-key="S">S</button>
+                    <button class="kb-key" data-key="D">D</button>
+                    <button class="kb-key" data-key="F">F</button>
+                    <button class="kb-key" data-key="G">G</button>
+                    <button class="kb-key" data-key="H">H</button>
+                    <button class="kb-key" data-key="J">J</button>
+                    <button class="kb-key" data-key="K">K</button>
+                    <button class="kb-key" data-key="L">L</button>
+                </div>
+                <div class="kb-row">
+                    <button class="kb-key kb-special" id="kb-switch-num">?123</button>
+                    <button class="kb-key" data-key="Z">Z</button>
+                    <button class="kb-key" data-key="X">X</button>
+                    <button class="kb-key" data-key="C">C</button>
+                    <button class="kb-key" data-key="V">V</button>
+                    <button class="kb-key" data-key="B">B</button>
+                    <button class="kb-key" data-key="N">N</button>
+                    <button class="kb-key" data-key="M">M</button>
+                    <button class="kb-key kb-special" id="kb-backspace-alpha"><i data-lucide="delete"></i></button>
+                </div>
             </div>
-            <div class="kb-row">
-                <button class="kb-key" data-key="A">A</button>
-                <button class="kb-key" data-key="S">S</button>
-                <button class="kb-key" data-key="D">D</button>
-                <button class="kb-key" data-key="F">F</button>
-                <button class="kb-key" data-key="G">G</button>
-                <button class="kb-key" data-key="H">H</button>
-                <button class="kb-key" data-key="J">J</button>
-                <button class="kb-key" data-key="K">K</button>
-                <button class="kb-key" data-key="L">L</button>
-            </div>
-            <div class="kb-row">
-                <button class="kb-key" data-key="Z">Z</button>
-                <button class="kb-key" data-key="X">X</button>
-                <button class="kb-key" data-key="C">C</button>
-                <button class="kb-key" data-key="V">V</button>
-                <button class="kb-key" data-key="B">B</button>
-                <button class="kb-key" data-key="N">N</button>
-                <button class="kb-key" data-key="M">M</button>
+        
+            <!-- Num Layer -->
+            <div class="kb-layer" id="kb-layer-sym" style="display:none;">
+                <div class="kb-row">
+                    <button class="kb-key" data-key="1">1</button>
+                    <button class="kb-key" data-key="2">2</button>
+                    <button class="kb-key" data-key="3">3</button>
+                    <button class="kb-key" data-key="4">4</button>
+                    <button class="kb-key" data-key="5">5</button>
+                    <button class="kb-key" data-key="6">6</button>
+                    <button class="kb-key" data-key="7">7</button>
+                    <button class="kb-key" data-key="8">8</button>
+                    <button class="kb-key" data-key="9">9</button>
+                    <button class="kb-key" data-key="0">0</button>
+                </div>
+                <div class="kb-row">
+                    <button class="kb-key" data-key=".">.</button>
+                    <button class="kb-key" data-key=",">,</button>
+                    <button class="kb-key" data-key="?">?</button>
+                    <button class="kb-key" data-key="!">!</button>
+                    <button class="kb-key" data-key="/">/</button>
+                    <button class="kb-key" data-key="@">@</button>
+                    <button class="kb-key" data-key="-">-</button>
+                    <button class="kb-key" data-key=":">:</button>
+                    <button class="kb-key" data-key=";">;</button>
+                </div>
+                <div class="kb-row">
+                    <button class="kb-key kb-special" id="kb-switch-alpha">ABC</button>
+                    <button class="kb-key" data-key="(">(</button>
+                    <button class="kb-key" data-key=")">)</button>
+                    <button class="kb-key" data-key="=">=</button>
+                    <button class="kb-key" data-key="'">'</button>
+                    <button class="kb-key" data-key="&quot;">"</button>
+                    <button class="kb-key kb-special" id="kb-backspace-sym"><i data-lucide="delete"></i></button>
+                </div>
             </div>
         </div>
 
     </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav">
+        <button class="nav-item" id="mob-ref">
+            <i data-lucide="table-2" style="width:20px; height:20px;"></i>
+            <span>Ref</span>
+        </button>
+        <button class="nav-item" id="mob-stats">
+            <i data-lucide="bar-chart-2" style="width:20px; height:20px;"></i>
+            <span>Stats</span>
+        </button>
+        <div style="width:60px; height:60px; display:flex; justify-content:center;flex-direction: column;align-items: center;">
+             <button class="nav-center-btn" id="mob-train">
+                <i data-lucide="gamepad-2" style="width:24px; height:24px;"></i>
+                
+             </button>
+             <span style="font-size:0.65rem;">Train</span>
+        </div>
+        <button class="nav-item" id="mob-controls">
+            <i data-lucide="sliders-horizontal" style="width:20px; height:20px;"></i>
+            <span>Controls</span>
+        </button>
+        <button class="nav-item" id="mob-donate">
+            <i data-lucide="heart" style="width:20px; height:20px; color:var(--danger); fill:var(--danger); stroke:none;"></i>
+            <span>Donate</span>
+        </button>
+    </nav>
 
     <!-- Logic -->
     <script>
@@ -977,7 +1453,7 @@
         const CHAR_SETS = {
             letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
             numbers: "0123456789",
-            specials: "?!.:;=/@'-,()"
+            specials: "?!.;/',:=+@\"()-"
         };
 
         const LEARN_LEVELS = [
@@ -993,7 +1469,7 @@
             'C': { phrase: "CO-ca-CO-la", hint: "Two loops (-.-.)" },
             'D': { phrase: "DOG-did-it", hint: "Dog running holding a bone (-..)" },
             'E': { phrase: "EH", hint: "Just a single eye (.)" },
-            'F': { phrase: "did-you-FAIL-it", hint: ".." },
+            'F': { phrase: "did-you-FAIL-it", hint: "..-." },
             'G': { phrase: "GOOD-GAME-now", hint: "--." },
             'H': { phrase: "hip-pi-ty-hop", hint: "Four legs hopping (....)" },
             'I': { phrase: "I-I", hint: "Two eyes (..)" },
@@ -1003,7 +1479,7 @@
             'M': { phrase: "MAM-MA", hint: "Two humps of M (--)" },
             'N': { phrase: "NAN-ny", hint: "Down slope (-.)" },
             'O': { phrase: "OH-MY-GOD", hint: "Three round donuts (---)" },
-            'P': { phrase: "a-POO-py-smell", hint: ".--." },
+            'P': { phrase: "a-POO-PY-smell", hint: ".--." },
             'Q': { phrase: "GOD-SAVE-the-QUEEN", hint: "--.-" },
             'R': { phrase: "a-RACE-car", hint: ".-." },
             'S': { phrase: "si-si-si", hint: "Three snakes (...)" },
@@ -1012,29 +1488,33 @@
             'V': { phrase: "vic-tor-y-VEE", hint: "...-" },
             'W': { phrase: "the-WORLD-WAR", hint: ".--" },
             'X': { phrase: "X-marks-the-SPOT", hint: "-..-" },
-            'Y': { phrase: "YELL-OW-yo-YO", hint: "-.--" },
-            'Z': { phrase: "ZINC-zoo-keep-er", hint: "--.." },
-            '1': { phrase: "ONE-dash-dash-dash", hint: ".----" },
-            '2': { phrase: "two-dots-dash-dash", hint: "..---" },
-            '3': { phrase: "three-dots-dash-dash", hint: "...--" },
-            '4': { phrase: "four-dots-and-dash", hint: "....-" },
-            '5': { phrase: "FIVE-little-dots", hint: "....." },
-            '6': { phrase: "dash-and-four-dots", hint: "-...." },
-            '7': { phrase: "dash-dash-three-dots", hint: "--..." },
-            '8': { phrase: "dash-dash-dash-two", hint: "---.." },
-            '9': { phrase: "dash-dash-dash-dash-dot", hint: "----." },
-            '0': { phrase: "ZERO-is-longest", hint: "-----" },
-            '?': { phrase: "ques-tion-MARK-ing", hint: "..--.." },
-            '!': { phrase: "EX-cla-MA-tion", hint: "-.-.--" },
-            '.': { phrase: "DOT-dot-dot-dot", hint: ".-.-.-" },
-            ',': { phrase: "COM-ma-COM-ma", hint: "--..--" },
-            '/': { phrase: "SLASH-ing-it-out", hint: "-..-." },
-            '@': { phrase: "AT-sign-at-sign", hint: ".--.-." },
-            '=': { phrase: "e-QUALS-sign-here", hint: "-...-" },
-            "'": { phrase: "A-pos-tro-PHE-now", hint: ".----." },
-            '-': { phrase: "dash-dash-dash-dash", hint: "-....-" }, 
-            '(': { phrase: "o-pen-PA-ren-thes", hint: "-.--." },
-            ')': { phrase: "close-PA-ren-thes-now", hint: "-.--.-" }
+            'Y': { phrase: "YELL-ow-YO-YO", hint: "-.--" },
+            'Z': { phrase: "ZINC-ZOO-keep-er", hint: "--.." },
+            '1': { phrase: "a-ONE-YEAR-LONG-TERM", hint: ".----" },      // (short LONG LONG LONG LONG)
+            '2': { phrase: "two-bits-ARE-TOO-HARD", hint: "..---" },      // (short short LONG LONG LONG)
+            '3': { phrase: "three-bits-are-SO-LONG", hint: "...--" },     // (short short short LONG LONG)
+            '4': { phrase: "the-four-bits-are-DONE", hint: "....-" },     // (short short short short LONG)
+            '5': { phrase: "five-bits-in-a-row", hint: "....." },         // (short short short short short)
+            '6': { phrase: "SIX-lit-tle-ti-ny", hint: "-...." },          // (LONG short short short short)
+            '7': { phrase: "SE-VEN-is-no-fun", hint: "--..." },           // (LONG LONG short short short)
+            '8': { phrase: "GREAT-BIG-GOATS-are-ill", hint: "---.." },    // (LONG LONG LONG short short)
+            '9': { phrase: "NINE-BIG-MEN-KICK-it", hint: "----." },       // (LONG LONG LONG LONG short)
+            '0': { phrase: "ZE-RO-IS-TOO-LONG", hint: "-----" },           // (LONG LONG LONG LONG LONG)
+            '?': { phrase: "it's-a-QUES-TION-is-it?", hint: "..--.." },
+            '!': { phrase: "EX-cla-MA-tion-MARK-ING", hint: "-.-.--" },
+            '.': { phrase: "a-STOP-a-STOP-a-STOP", hint: ".-.-.-" },
+            ',': { phrase: "COM-MA-it's-a-COM-MA", hint: "--..--" },
+            '/': { phrase: "SHAVE-and-a-HAIR-cut", hint: "-..-." },
+            "'": { phrase: "and-THIS-STUFF-GOES-TO-me!", hint: ".----." },
+            ";": { phrase: "A-list-B-list-C-list", hint: "-.-.-." },
+            ':': { phrase: "HERE'S-A-LONG-list-for-you", hint: "---..." }, // (LONG LONG LONG short short short)
+            '=': { phrase: "SUMS-are-done-here-TOO", hint: "-...-" },      // (LONG short short short LONG)
+            '-': { phrase: "DASH-a-lit-tle-bit-MORE", hint: "-....-" },    // (LONG short short short short LONG)
+            '(': { phrase: "LOUD-ly-I-SPEAK-now", hint: "-.--." },        // (LONG short LONG LONG short)
+            ')': { phrase: "CLOSE-it-UP-TIGHT-to-DAY", hint: "-.--.-" },   // (LONG short LONG LONG short LONG)
+            '+': { phrase: "and-ADD-some-MORE-bits", hint: ".-.-." },      // (short LONG short LONG short)
+            '@': { phrase: "at-WORK-SPACE-dot-COM-net", hint: ".--.-." }, // (short LONG LONG short LONG short)
+            '"': { phrase: "a-QUOTE-is-in-HERE-now", hint: ".-..-." }      // (short LONG short short LONG short)
         };
 
         const REVERSE_MORSE = {};
@@ -1076,7 +1556,7 @@
     "CARD", "CARE", "CASE", "CASH", "CAST", "CELL", "CENT", "CITY", "CLAY", "CLUB",
     "COAL", "COAT", "COIN", "COLD", "COME", "COOK", "COOL", "COPY", "CORE", "CORN",
     "COST", "CROP", "DARK", "DATA", "DEAD", "DEAL", "DECK", "DEEP", "DEER", "DESK",
-    "DIAL", "DISK", "DOOR", "DOWN", "DRAW", "DROP", "DRUM", "DUCK", "DUST", "DUTY",
+    "DIAL", "DISK", "DOOR", "DOWN", "DRAW", "DROP", "DUCK", "DUST", "DUTY",
     "EACH", "EARN", "EAST", "EASY", "EDGE", "EDIT", "ELSE", "EVEN", "EVER", "EXIT",
     "FACE", "FACT", "FADE", "FAIL", "FAIR", "FALL", "FAME", "FARM", "FAST", "FATE",
     "FEAR", "FEED", "FEEL", "FEET", "FILE", "FILL", "FILM", "FINE", "FIRE", "FIRM",
@@ -1087,7 +1567,7 @@
     "HEAD", "HEAR", "HEAT", "HELD", "HELP", "HERO", "HIGH", "HILL", "HINT", "HIRE",
     "HOLD", "HOLE", "HOME", "HOOK", "HOPE", "HORN", "HOST", "HOUR", "HUGE", "HULL",
     "HUNT", "HURT", "ICON", "IDEA", "INCH", "INFO", "IRON", "ITEM", "JACK", "JAZZ",
-    "JEEP", "JOIN", "JOKE", "JUMP", "JUST", "KEEP", "KEPT", "KICK", "KILL", "KIND",
+    "JEEP", "JOIN", "JOKE", "JUMP", "JUST", "KEEP", "KICK", "KILL", "KIND",
     "KING", "KNEE", "KNOW", "LACK", "LAKE", "LAMP", "LAND", "LANE", "LAST", "LATE",
     "LEAD", "LEAF", "LEAN", "LEFT", "LEND", "LENS", "LIFT", "LIKE", "LINE", "LINK",
     "LION", "LIST", "LIVE", "LOAD", "LOAN", "LOCK", "LONG", "LOOK", "LOOP", "LORD",
@@ -1262,13 +1742,15 @@
             charTypes: { letters: true, numbers: false, specials: false }
         };
 
+        // NEW STATS STRUCTURE
         let userStats = { 
             wpmHistory: [], 
-            qcodeHistory: [], 
-            missedLetters: {}, 
-            slowLetters: {}, 
+            qcodeHistory: [],
+            // Split stats
+            tx: { totalChars: 0, totalErrors: 0, heat: {} },
+            rx: { totalChars: 0, totalErrors: 0, heat: {} },
             learnIndex: 0,
-            totalPlayTime: 0 // New field
+            totalPlayTime: 0
         };
         
         let gameState = {
@@ -1305,6 +1787,9 @@
             squeezeCurrentlyPressed: false,
             squeezePressedDuringElement: false
         };
+        
+        // Track stats visualization mode
+        let statsViewMode = 'tx'; 
 
         let audioContext = null;
         let osc = null;
@@ -1316,19 +1801,37 @@
                 if(s) settings = { ...settings, ...JSON.parse(s) };
                 if (settings.polarity !== 'normal' && settings.polarity !== 'inverse') settings.polarity = 'normal';
                 if(!settings.charTypes) settings.charTypes = { letters: true, numbers: false, specials: false };
+                
                 const st = localStorage.getItem('morseProStats');
                 if(st) {
                     const parsed = JSON.parse(st);
+                    
+                    // Robust Initialization with Fallbacks
+                    let txData = parsed.tx || { totalChars: 0, totalErrors: 0, heat: {} };
+                    if(!txData.heat) txData.heat = {};
+                    if(typeof txData.totalChars !== 'number') txData.totalChars = 0;
+                    if(typeof txData.totalErrors !== 'number') txData.totalErrors = 0;
+
+                    let rxData = parsed.rx || { totalChars: 0, totalErrors: 0, heat: {} };
+                    if(!rxData.heat) rxData.heat = {};
+                    if(typeof rxData.totalChars !== 'number') rxData.totalChars = 0;
+                    if(typeof rxData.totalErrors !== 'number') rxData.totalErrors = 0;
+                    
+                    // Legacy Migration (missedLetters -> tx.heat)
+                    if (parsed.missedLetters && (!parsed.tx || Object.keys(parsed.tx.heat).length === 0)) {
+                         Object.assign(txData.heat, parsed.missedLetters);
+                    }
+
                     userStats = {
-                        wpmHistory: parsed.wpmHistory || [],
-                        qcodeHistory: parsed.qcodeHistory || [],
-                        missedLetters: parsed.missedLetters || {},
-                        slowLetters: parsed.slowLetters || {},
+                        wpmHistory: Array.isArray(parsed.wpmHistory) ? parsed.wpmHistory : [],
+                        qcodeHistory: Array.isArray(parsed.qcodeHistory) ? parsed.qcodeHistory : [],
+                        tx: txData,
+                        rx: rxData,
                         learnIndex: parsed.learnIndex || 0,
                         totalPlayTime: parsed.totalPlayTime || 0
                     };
                 }
-            } catch(e) { console.warn(e); }
+            } catch(e) { console.warn("Stats Load Error", e); }
         }
 
         function saveData() {
@@ -1422,25 +1925,25 @@
         }
 
         function getTimings() {
-            let charWpm = settings.wpm;
-            let spacingWpm = settings.wpm;
+                    let charWpm = settings.wpm;
+                    let spacingWpm = settings.wpm;
 
-            if (settings.farnsworth && settings.wpm < 20 && (gameState.trainingType === 'recv' || isPlayingSequence)) {
-                charWpm = 20; 
-                spacingWpm = settings.wpm; 
-            }
+                    if (settings.farnsworth && settings.wpm < 20 && ((gameState.active && gameState.trainingType === 'recv') || isPlayingSequence)) {
+                        charWpm = 20; 
+                        spacingWpm = settings.wpm; 
+                    }
 
-            const t_char = 1200 / charWpm;
-            const t_space = 1200 / spacingWpm;
+                    const t_char = 1200 / charWpm;
+                    const t_space = 1200 / spacingWpm;
 
-            return {
-                dit: t_char,
-                dah: t_char * 3,
-                elementGap: t_char,
-                letterGap: t_space * 3,
-                wordGap: t_space * 7
-            };
-        }
+                    return {
+                        dit: t_char,
+                        dah: t_char * 3,
+                        elementGap: t_char,
+                        letterGap: t_space * 3,
+                        wordGap: t_space * 7
+                    };
+                }
 
         function processInput(char) {
             if(gameState.active && gameState.trainingType === 'send') {
@@ -1613,7 +2116,11 @@
              if(!pool || pool.length === 0) pool = CHAR_SETS.letters.split('');
             
             let weightedPool = [...pool];
-            Object.entries(userStats.missedLetters).forEach(([char, count]) => {
+            // Weighting using new stats structure.
+            // Using TX errors for adaptive difficulty if we are in TX mode, else RX.
+            const heatSource = (gameState.trainingType === 'send') ? userStats.tx.heat : userStats.rx.heat;
+
+            Object.entries(heatSource).forEach(([char, count]) => {
                 if(pool.includes(char)) {
                     const copies = Math.min(count * 2, 15); 
                     for(let i=0; i<copies; i++) weightedPool.push(char);
@@ -1647,6 +2154,90 @@
             if(poolStr === "") poolStr = CHAR_SETS.letters;
             return poolStr.split('');
         }
+
+        /* --- UI State Management for Tabs --- */
+        const uiState = {
+            activeTab: null // 'train', 'stats', 'ref', 'controls'
+        };
+
+        const switchTab = (newTab) => {
+                    // 1. Close current
+                    if (uiState.activeTab) {
+                        // Remove active class from button
+                        const oldBtn = document.getElementById(getBtnId(uiState.activeTab));
+                        if (oldBtn) oldBtn.classList.remove('active');
+                        
+                        // Close drawer/overlay
+                        const oldEl = document.getElementById(getDrawerId(uiState.activeTab));
+                        if (oldEl) {
+                            oldEl.classList.remove('open', 'visible');
+                            // Handle special 'visible' class for cheat-sheet for backward compat
+                            if (uiState.activeTab === 'ref') oldEl.classList.remove('visible');
+                        }
+                    }
+
+                    // 2. If clicking same tab, just toggle off (already closed above), set state null
+                    if (uiState.activeTab === newTab) {
+                        uiState.activeTab = null;
+                        return;
+                    }
+
+                    // 3. Open new
+                    if (newTab) {
+                        // Add active class to button
+                        const newBtn = document.getElementById(getBtnId(newTab));
+                        if (newBtn) newBtn.classList.add('active');
+                        
+                        // Open drawer
+                        const newEl = document.getElementById(getDrawerId(newTab));
+                        if (newEl) {
+                            newEl.classList.add('open');
+                            // Special for ref table
+                            if (newTab === 'ref') newEl.classList.add('visible');
+                            
+                            // Special for stats render
+                            if (newTab === 'stats') renderAnalytics();
+
+                            // --- NEW: SCROLL RESET LOGIC ---
+                            // 1. Reset the drawer itself (Works for Ref Table & Controls)
+                            newEl.scrollTop = 0;
+
+                            // 2. Reset inner scrollable cards (Works for Stats & Setup on mobile)
+                            // We target the specific inner classes used for content
+                            const innerCard = newEl.querySelector('.setup-card, .stats-dashboard, .glass-card');
+                            if (innerCard) {
+                                innerCard.scrollTop = 0;
+                            }
+                        }
+                        
+                        // Special desktop logic for minigame button state
+                        if (newTab === 'train') {
+                            document.getElementById('minigame-btn').classList.add('active-state');
+                        } else {
+                            document.getElementById('minigame-btn').classList.remove('active-state');
+                        }
+                    } else {
+                            document.getElementById('minigame-btn').classList.remove('active-state');
+                    }
+
+                    uiState.activeTab = newTab;
+                };
+
+        const getBtnId = (tab) => {
+            if (tab === 'train') return 'mob-train';
+            if (tab === 'stats') return 'mob-stats';
+            if (tab === 'ref') return 'mob-ref';
+            if (tab === 'controls') return 'mob-controls';
+            return '';
+        };
+
+        const getDrawerId = (tab) => {
+            if (tab === 'train') return 'setup-overlay';
+            if (tab === 'stats') return 'analytics-overlay';
+            if (tab === 'ref') return 'table-container';
+            if (tab === 'controls') return 'control-drawer';
+            return '';
+        };
 
         function startMinigame() {
             gameState.active = true;
@@ -1698,11 +2289,12 @@
             gameState.totalChars = 0;
             gameState.startTime = Date.now();
             
-            document.getElementById('setup-overlay').style.display = 'none';
-            document.getElementById('game-results-overlay').style.display = 'none';
+            // Close setup drawer
+            switchTab(null);
+            
+            document.getElementById('game-results-overlay').classList.remove('open');
             document.getElementById('game-active').style.display = 'flex';
             document.getElementById('output').style.display = 'none';
-            document.getElementById('control-drawer').classList.remove('open');
             
             updateInputMethod();
             
@@ -1815,11 +2407,7 @@
                 s.style.position = 'relative';
                 
                 if (gameState.trainingType === 'recv') {
-                    // Hide future letters, show past/current
-                    // Logic: If already correctly typed (idx < currentCharIndex), show green (handled by 'correct' class).
-                    // If current (idx === currentCharIndex), it's the one we are typing.
-                    // But in RX mode we usually hide untyped letters.
-                    // The 'correct' class colors it green. We just need to ensure transparent base.
+                    // Hide future letters
                     s.style.color = "transparent";
                     s.style.borderBottom = "2px solid rgba(255,255,255,0.2)";
                 }
@@ -1861,12 +2449,25 @@
         }
 
         function handleMinigameInput(char) {
+            // Safety: If game ended or char is invalid
+            if (!gameState.active) return;
+            
             const item = gameState.items[gameState.currentItemIndex];
+            if (!item) return; // Guard against index out of bounds
+            
             let targetChar;
             if (gameState.gameMode === 'learn') targetChar = item.target; 
             else targetChar = item.target[gameState.currentCharIndex];
             
+            // Record Attempt in global stats
+            const modeKey = (gameState.trainingType === 'send') ? 'tx' : 'rx';
+            
+            // Safety for stats in case initialization failed
+            if (!userStats[modeKey]) userStats[modeKey] = { totalChars: 0, totalErrors: 0, heat: {} };
+            
             if(char === targetChar) {
+                userStats[modeKey].totalChars++;
+                
                 if (gameState.gameMode === 'learn') {
                      const card = document.querySelector('.mnemonic-card');
                      card.style.transform = "scale(1.1)";
@@ -1889,7 +2490,6 @@
                     gameState.totalChars++;
                     if(gameState.currentCharIndex >= item.target.length) {
                         // Word Finished
-                        // Render one last time to show full green word
                         renderGameWord(false); 
 
                         // Increased delay for RX mode to 1.5s
@@ -1905,12 +2505,20 @@
                             }
                         }, delay);
                     } else {
-                         // Correct letter, update UI, DO NOT PLAY AUDIO
+                         // Correct letter
                          renderGameWord(false); 
                     }
                 }
             } else {
+                // Mistake
                 gameState.mistakes++;
+                userStats[modeKey].totalChars++;
+                userStats[modeKey].totalErrors++;
+                
+                // Heatmap Update Safety
+                if (!userStats[modeKey].heat) userStats[modeKey].heat = {};
+                userStats[modeKey].heat[targetChar] = (userStats[modeKey].heat[targetChar] || 0) + 1;
+
                 if (gameState.gameMode === 'learn') {
                     stopAudioPlayback();
                     playMorseWord(targetChar);
@@ -1922,43 +2530,67 @@
                         setTimeout(() => active.classList.remove('wrong'), 400);
                     }
                 }
-                userStats.missedLetters[targetChar] = (userStats.missedLetters[targetChar] || 0) + 1;
                 saveStats();
             }
         }
 
         function finishGame() {
-            gameState.active = false;
-            stopAudioPlayback();
-            
-            const elapsedTime = Date.now() - gameState.startTime;
-            userStats.totalPlayTime = (userStats.totalPlayTime || 0) + elapsedTime;
+            try {
+                gameState.active = false;
+                stopAudioPlayback();
+                
+                const elapsedTime = Date.now() - gameState.startTime;
+                userStats.totalPlayTime = (userStats.totalPlayTime || 0) + elapsedTime;
 
-            const mins = elapsedTime / 60000;
-            const wpm = Math.round((gameState.totalChars / 5) / mins);
-            const val = isFinite(wpm) ? wpm : 0;
-            
-            document.getElementById('result-wpm').textContent = val;
-            document.getElementById('result-mistakes').textContent = gameState.mistakes;
-            
-            const secs = Math.floor(elapsedTime / 1000);
-            document.getElementById('result-time').textContent = `${Math.floor(secs/60)}:${(secs%60).toString().padStart(2,'0')}`;
-            
-            document.getElementById('game-results-overlay').style.display = 'flex';
-            document.getElementById('game-active').style.display = 'none';
-            document.getElementById('minigame-btn').classList.remove('active-state');
-            document.getElementById('buttons').style.display = 'flex';
-            document.getElementById('virtual-keyboard').style.display = 'none';
-            document.getElementById('output').style.display = 'flex';
-            
-            if (gameState.gameMode === 'qcodes') {
-                userStats.qcodeHistory.push(val);
-                if(userStats.qcodeHistory.length > 50) userStats.qcodeHistory.shift();
-            } else if (gameState.gameMode === 'words' || gameState.gameMode === 'random') {
-                userStats.wpmHistory.push(val);
-                if(userStats.wpmHistory.length > 50) userStats.wpmHistory.shift();
+                const mins = elapsedTime / 60000;
+                // Avoid division by zero
+                const wpm = (mins > 0) ? Math.round((gameState.totalChars / 5) / mins) : 0;
+                const val = isFinite(wpm) ? wpm : 0;
+                
+                const elWpm = document.getElementById('result-wpm');
+                if(elWpm) elWpm.textContent = val;
+                
+                const elMistakes = document.getElementById('result-mistakes');
+                if(elMistakes) elMistakes.textContent = gameState.mistakes;
+                
+                // Session Accuracy
+                const sessionAcc = gameState.totalChars > 0 
+                    ? Math.max(0, 100 - Math.round((gameState.mistakes / gameState.totalChars) * 100))
+                    : 100;
+                
+                const elAcc = document.getElementById('result-accuracy');
+                if(elAcc) elAcc.textContent = sessionAcc + "%";
+
+                const secs = Math.floor(elapsedTime / 1000);
+                const elTime = document.getElementById('result-time');
+                if(elTime) elTime.textContent = `${Math.floor(secs/60)}:${(secs%60).toString().padStart(2,'0')}`;
+                
+                // Show Overlay
+                document.getElementById('game-results-overlay').classList.add('open');
+                
+                document.getElementById('game-active').style.display = 'none';
+                document.getElementById('minigame-btn').classList.remove('active-state');
+                document.getElementById('buttons').style.display = 'flex';
+                document.getElementById('virtual-keyboard').style.display = 'none';
+                document.getElementById('output').style.display = 'flex';
+                
+                // Save Stats with safety checks
+                if (gameState.gameMode === 'qcodes') {
+                    if(!Array.isArray(userStats.qcodeHistory)) userStats.qcodeHistory = [];
+                    userStats.qcodeHistory.push(val);
+                    if(userStats.qcodeHistory.length > 50) userStats.qcodeHistory.shift();
+                } else if (gameState.gameMode === 'words' || gameState.gameMode === 'random') {
+                    if(!Array.isArray(userStats.wpmHistory)) userStats.wpmHistory = [];
+                    userStats.wpmHistory.push(val);
+                    if(userStats.wpmHistory.length > 50) userStats.wpmHistory.shift();
+                }
+                saveStats();
+            } catch(e) {
+                console.error("Game Finish Error", e);
+                // Force exit if UI crashed to prevent being stuck
+                document.getElementById('game-active').style.display = 'none';
+                document.getElementById('game-results-overlay').classList.add('open');
             }
-            saveStats();
         }
 
         function initUI() {
@@ -1966,9 +2598,16 @@
             const toggleBtn = document.getElementById('mobile-nav-toggle');
             const closeBtn = document.getElementById('drawer-close-btn');
 
-            const toggleMenu = () => drawer.classList.toggle('open');
+            const toggleMenu = () => {
+                drawer.classList.toggle('open');
+                updateNavState('controls', drawer.classList.contains('open'));
+            };
+            
             toggleBtn.onclick = toggleMenu;
-            closeBtn.onclick = () => drawer.classList.remove('open');
+            closeBtn.onclick = () => {
+                drawer.classList.remove('open');
+                switchTab(null); // Ensure state clears
+            }
 
             const vSlider = document.getElementById('vol-slider');
             vSlider.value = settings.vol;
@@ -2072,41 +2711,45 @@
                 out.textContent = out.textContent.slice(0, -1);
             };
 
-            document.getElementById('minigame-btn').onclick = () => {
-                const overlay = document.getElementById('setup-overlay');
-                const isActive = overlay.style.display === 'flex';
-                if(isActive) {
-                    overlay.style.display = 'none';
-                    document.getElementById('minigame-btn').classList.remove('active-state');
-                } else {
-                    document.getElementById('analytics-overlay').style.display = 'none';
-                    overlay.style.display = 'flex';
-                    document.getElementById('minigame-btn').classList.add('active-state');
-                }
-                if(window.innerWidth <= 1024) drawer.classList.remove('open');
+            // Helper to keep desktop buttons synced if mixed usage - Placeholder
+            const updateNavState = (tab, isOpen) => {
+               // Simplified for mobile-first logic
             };
+            
+            const donate = () => window.open('https://ko-fi.com/vladyakimov', '_blank');
 
-            document.getElementById('analytics-btn').onclick = () => {
-                const ui = document.getElementById('analytics-overlay');
-                if(ui.style.display === 'flex') {
-                    ui.style.display = 'none';
-                } else {
-                    document.getElementById('setup-overlay').style.display = 'none';
-                    document.getElementById('minigame-btn').classList.remove('active-state');
-                    ui.style.display = 'flex';
-                    renderAnalytics();
-                }
-                if(window.innerWidth <= 1024) drawer.classList.remove('open');
-            };
-            document.getElementById('close-analytics-btn').onclick = () => document.getElementById('analytics-overlay').style.display = 'none';
+            // Desktop Listeners (Mapped to new Logic)
+            document.getElementById('minigame-btn').onclick = () => switchTab('train');
+            document.getElementById('analytics-btn').onclick = () => switchTab('stats');
+            document.getElementById('table-btn').onclick = () => switchTab('ref');
+            document.getElementById('donate-btn').onclick = donate;
+            
+            // Mobile Listeners
+            document.getElementById('mob-train').onclick = () => switchTab('train');
+            document.getElementById('mob-stats').onclick = () => switchTab('stats');
+            document.getElementById('mob-ref').onclick = () => switchTab('ref');
+            document.getElementById('mob-controls').onclick = () => switchTab('controls');
+            document.getElementById('mob-donate').onclick = donate;
+
+            document.getElementById('start-game-btn').onclick = startMinigame;
+            document.getElementById('cancel-game-btn').onclick = () => switchTab(null);
+            document.getElementById('close-analytics-btn').onclick = () => switchTab(null);
+            document.getElementById('close-table-btn').onclick = () => switchTab(null);
+            
             document.getElementById('reset-stats-btn').onclick = () => {
                 if(confirm("Reset statistics?")) {
-                    userStats = { wpmHistory: [], qcodeHistory: [], missedLetters: {}, slowLetters: {}, learnIndex: 0, totalPlayTime: 0 };
+                    userStats = { 
+                        wpmHistory: [], 
+                        qcodeHistory: [], 
+                        tx: { totalChars: 0, totalErrors: 0, heat: {} },
+                        rx: { totalChars: 0, totalErrors: 0, heat: {} },
+                        learnIndex: 0, 
+                        totalPlayTime: 0 
+                    };
                     saveStats();
                     renderAnalytics();
                 }
             };
-            document.getElementById('donate-btn').onclick = () => window.open('https://ko-fi.com/vladyakimov', '_blank'); 
             
             document.getElementById('replay-result-btn').onclick = () => {
                 startMinigame();
@@ -2230,12 +2873,26 @@
             };
 
             updateDesc();
+            
+            // Stats Mode Toggles
+            const statTxBtn = document.getElementById('stat-mode-tx');
+            const statRxBtn = document.getElementById('stat-mode-rx');
+            
+            statTxBtn.onclick = () => {
+                statsViewMode = 'tx';
+                statTxBtn.classList.add('selected');
+                statRxBtn.classList.remove('selected');
+                renderAnalytics();
+            };
+            statRxBtn.onclick = () => {
+                statsViewMode = 'rx';
+                statRxBtn.classList.add('selected');
+                statTxBtn.classList.remove('selected');
+                renderAnalytics();
+            };
+
 
             document.getElementById('start-game-btn').onclick = startMinigame;
-            document.getElementById('cancel-game-btn').onclick = () => {
-                document.getElementById('setup-overlay').style.display = 'none';
-                document.getElementById('minigame-btn').classList.remove('active-state');
-            };
             document.getElementById('quit-game-btn').onclick = () => {
                 gameState.active = false;
                 stopAudioPlayback();
@@ -2277,15 +2934,18 @@
                 };
                 grid.appendChild(div);
             });
-            document.getElementById('table-btn').onclick = () => tableContainer.classList.add('visible');
-            document.getElementById('close-table-btn').onclick = () => tableContainer.classList.remove('visible');
 
             document.getElementById('init-btn').onclick = () => {
-                document.getElementById('start-overlay').style.display = 'none';
+                document.getElementById('start-overlay').classList.remove('open');
+                // small delay to remove from layout flow or just keep it hidden with pointer-events none
+                setTimeout(() => {
+                     document.getElementById('start-overlay').style.display = 'none'; // Force hide to prevent interference
+                }, 300);
                 initAudio();
             };
+            
             window.closeResults = () => {
-                document.getElementById('game-results-overlay').style.display = 'none';
+                document.getElementById('game-results-overlay').classList.remove('open');
                 document.getElementById('game-active').style.display = 'none'; 
                 document.getElementById('output').style.display = 'flex';
                 document.getElementById('minigame-btn').classList.remove('active-state');
@@ -2311,17 +2971,29 @@
             const mins = Math.floor((t % 3600000) / 60000);
             document.getElementById('stat-total-time').textContent = `${hrs}h ${mins}m`;
 
-            // 2. Render Heatmap (QWERTY layout)
+            // Accuracy Calculation (Based on View Mode)
+            const source = (statsViewMode === 'tx') ? userStats.tx : userStats.rx;
+            const acc = (source.totalChars > 0)
+                ? Math.max(0, 100 - Math.round((source.totalErrors / source.totalChars) * 100))
+                : 100;
+            
+            document.getElementById('stat-accuracy').textContent = acc + "%";
+            document.getElementById('heatmap-title').textContent = (statsViewMode === 'tx') ? "TX Error Heatmap" : "RX Error Heatmap";
+            
+            // 2. Render Heatmap (Expanded to include numbers and symbols)
             const rows = [
+                "1234567890",
                 "QWERTYUIOP",
                 "ASDFGHJKL",
-                "ZXCVBNM"
+                "ZXCVBNM",
+                ".,?!/@",
+                "-:;()='\""
             ];
             const heatmapGrid = document.getElementById('heatmap-grid');
             heatmapGrid.innerHTML = '';
             
             // Find max error count for scaling color
-            const maxErrors = Math.max(...Object.values(userStats.missedLetters), 5);
+            const maxErrors = Math.max(...Object.values(source.heat), 5);
             
             rows.forEach(rowStr => {
                 const rowDiv = document.createElement('div');
@@ -2331,7 +3003,7 @@
                     keyDiv.className = 'hm-key';
                     keyDiv.textContent = char;
                     
-                    const errs = userStats.missedLetters[char] || 0;
+                    const errs = source.heat[char] || 0;
                     if(errs > 0) {
                         keyDiv.setAttribute('data-errors', errs);
                         keyDiv.classList.add('has-error');
@@ -2483,7 +3155,10 @@
             
             document.oncontextmenu = (e) => e.preventDefault();
             
-            document.querySelectorAll('.kb-key').forEach(keyBtn => {
+            // Keyboard Interactions
+            
+            // 1. Data Keys
+            document.querySelectorAll('.kb-key[data-key]').forEach(keyBtn => {
                 keyBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     if(gameState.active && gameState.trainingType === 'recv') {
@@ -2491,11 +3166,38 @@
                     }
                 });
             });
+
+            // 2. Layer Switching
+            const layerAlpha = document.getElementById('kb-layer-alpha');
+            const layerSym = document.getElementById('kb-layer-sym');
+            
+            document.getElementById('kb-switch-num').onclick = () => {
+                layerAlpha.style.display = 'none';
+                layerSym.style.display = 'flex';
+            };
+            
+            document.getElementById('kb-switch-alpha').onclick = () => {
+                layerSym.style.display = 'none';
+                layerAlpha.style.display = 'flex';
+            };
+            
+            // 3. Backspaces (mapped to same logic)
+            const handleBack = () => { /* No backspace in game logic currently needed */ };
+            // Actually, we do not have backspace logic in the game itself because
+            // the game is instant-fail or instant-success per char. 
+            // So visually we just show the delete icon, but maybe it does nothing or resets?
+            // Wait, looking at handleMinigameInput... it logs error immediately.
+            // So backspace is actually not useful in this "Minigame" context. 
+            // BUT, visual consistency matters. Let's make it do nothing or flash.
+            // Or better, let's allow it to act as "skip" if we wanted, but for now I'll leave it 
+            // visually present. 
+            
         }
 
         loadData();
         initUI();
         setupInputs();
+
         
     </script>
 </body>
